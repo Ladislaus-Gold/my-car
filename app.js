@@ -36,6 +36,7 @@
     x: '<path d="M18 6L6 18M6 6l12 12"/>',
     check: '<path d="M20 6L9 17l-5-5"/>',
     img: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+    tire: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21"/>',
     chart: '<path d="M3 3v18h18M7 15v3M12 10v8M17 6v12"/>'
   };
   window.I = function (n, s, cls) {
@@ -66,6 +67,7 @@
       case 'repair': case 'to': case 'diag':
         if (d.total !== undefined && d.total !== null && d.total !== '') return +d.total || 0;
         return (d.works || []).reduce(function (s, w) { return s + (+w.cost || 0); }, 0);
+      case 'tire': return (+d.amount || 0) + (d.bought ? (+d.tyreCost || 0) : 0);
       case 'fuel': case 'charge': case 'other': return +d.cost || 0;
       case 'insurance': case 'wash': case 'fine': return +d.amount || 0;
       default: return 0;
@@ -148,6 +150,7 @@
     { id: 'insurance', label: 'Страховка', icon: 'shield', cls: 'c-ins' },
     { id: 'fuel', label: 'Заправка', icon: 'fuel', cls: 'c-fuel' },
     { id: 'wash', label: 'Мийка', icon: 'wash', cls: 'c-wash' },
+    { id: 'tire', label: 'Шиномонтаж', icon: 'tire', cls: 'c-tire' },
     { id: 'charge', label: 'Зарядка', icon: 'charge', icon2: 'bolt', cls: 'c-charge' },
     { id: 'fine', label: 'Штраф', icon: 'doc', icon2: 'gavel', cls: 'c-fine' },
     { id: 'other', label: 'Інше', icon: 'more', icon2: 'car', cls: 'c-other' }
@@ -158,6 +161,7 @@
     repair: ['Двигун', 'Трансмісія', 'Підвіска', 'Гальмівна система', 'Рульове керування', 'Електрика', 'Кузов', 'Салон', 'Вихлопна система', 'Охолодження', 'Кондиціонер', 'Інше'],
     to: ['Заміна масла', 'Масляний фільтр', 'Повітряний фільтр', 'Салонний фільтр', 'Паливний фільтр', 'Свічки запалювання', 'Гальмівні колодки', 'Гальмівна рідина', 'Антифриз', 'Ремінь/ланцюг ГРМ', 'Регламентне ТО', 'Інше'],
     diag: ['Комп’ютерна', 'Ходова частина', 'Двигун', 'Електрика', 'Кузов / геометрія', 'Гальма', 'Інше'],
+    tire: ['Сезонна заміна шин', 'Балансування', 'Ремонт проколу', 'Заміна дисків', 'Розвал-сходження', 'Інше'],
     fuel: ['Бензин', 'Дизель', 'Газ', 'Газ/Бензин', 'Гібрид', 'Електро'],
     wash: ['Безконтактна', 'Ручна', 'Комплексна', 'Хімчистка салону', 'Самообслуговування', 'Інше'],
     body: ['Седан', 'Хетчбек', 'Універсал', 'Ліфтбек', 'Кросовер', 'Позашляховик', 'Купе', 'Кабріолет', 'Мінівен', 'Пікап', 'Фургон'],
@@ -208,6 +212,13 @@
       { k: 'cost', t: 'money', l: 'Вартість ₴', req: 1 },
       { k: 'fuelType', t: 'select', l: 'Тип палива', req: 1, ph: 'Оберіть тип палива', opts: OPTS.fuel },
       { k: 'station', t: 'text', l: 'АЗС', ph: 'Назва АЗС' }] },
+    tire: { fields: [DATE, MILE,
+      { k: 'tyType', t: 'select', l: 'Вид робіт', req: 1, ph: 'Оберіть вид робіт', opts: OPTS.tire },
+      { k: 'amount', t: 'money', l: 'Вартість шиномонтажу ₴' },
+      { k: 'bought', t: 'bought' },
+      { k: 'remDate', t: 'date', l: 'Нагадування (дата)', slash: true },
+      { k: 'remKm', t: 'num', l: 'Нагадування (через N км)', ph: 'напр. 6 000' },
+      { k: 'note', t: 'textarea', l: 'Примітка', ph: 'Примітка' }] },
     charge: { att: false, fields: [DATE, MILE,
       { k: 'kwh', t: 'money', l: 'кВт·год', req: 1, ph: 'напр. 30' },
       { k: 'ppl', t: 'money', l: 'Ціна за кВт·год ₴' },
@@ -246,7 +257,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '1.0.1';
+  var VERSION = '1.0.3';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -343,7 +354,7 @@
       if ((b = t.closest('.rmw'))) { b.closest('[data-work]').remove(); renumber(); calcTotal(); return true; }
     }
     if (type === 'change') {
-      if (t.matches && t.matches('input[type=file]')) { addFiles(t.closest('[data-att]'), t.files).then(function () { t.value = ''; }); return true; }
+      if (t.matches && t.matches('input[type=file]') && t.closest('[data-att]')) { addFiles(t.closest('[data-att]'), t.files).then(function () { t.value = ''; }); return true; }
       if (t.classList.contains('native')) {
         if (t.value) { var inp = t.parentNode.querySelector('.dt'); inp.value = fmtD(t.value).replace(/\./g, inp.dataset.mask); var f = inp.closest('.fld'); if (f) f.classList.remove('err'); }
         return true;
@@ -408,6 +419,24 @@
       r.readAsDataURL(file);
     });
   }
+  function shrinkSquare(file, size, q) {
+    return new Promise(function (res, rej) {
+      var r = new FileReader();
+      r.onerror = function () { rej(new Error('Не вдалося прочитати файл')); };
+      r.onload = function () {
+        var im = new Image();
+        im.onerror = function () { rej(new Error('Невірний формат зображення')); };
+        im.onload = function () {
+          var side = Math.min(im.width, im.height), cv = document.createElement('canvas');
+          cv.width = cv.height = size;
+          cv.getContext('2d').drawImage(im, (im.width - side) / 2, (im.height - side) / 2, side, side, 0, 0, size, size);
+          res(cv.toDataURL('image/jpeg', q));
+        };
+        im.src = r.result;
+      };
+      r.readAsDataURL(file);
+    });
+  }
   function addFiles(box, files) {
     box._f = box._f || [];
     var max = +box.dataset.max || 8, list = Array.prototype.slice.call(files);
@@ -449,6 +478,7 @@
       case 'text': inp = '<input class="inp" name="' + f.k + '" autocomplete="off" placeholder="' + esc(f.ph || '') + '" value="' + esc(v) + '">'; break;
       case 'textarea': inp = '<textarea class="inp" name="' + f.k + '" placeholder="' + esc(f.ph || '') + '">' + esc(v) + '</textarea>'; break;
       case 'select': inp = selectEl(f.k, f.opts, v, f.ph); break;
+      case 'bought': inp = '<label class="chk neu"><input type="checkbox" name="bought"><span class="box">' + I('check', 22) + '</span><b>Купував шини</b></label><input type="hidden" name="tyreName"><input type="hidden" name="tyreCost"><div class="tyinfo hidden"><span></span><button type="button" class="link" id="tyedit">Змінити</button></div>'; break;
       case 'paid': inp = '<label class="chk"><input type="checkbox" name="' + f.k + '"><span class="box">' + I('check', 22) + '</span><b>Не сплачено</b></label>'; break;
     }
     return '<div class="fld" data-k="' + f.k + '">' + lab + inp + '</div>';
@@ -459,7 +489,7 @@
       case 'date': return parseD(el.value);
       case 'num': return el.value ? parseInt(el.value, 10) : '';
       case 'money': return el.value === '' ? '' : (parseFloat(el.value) || 0);
-      case 'paid': return el.checked;
+      case 'paid': case 'bought': return el.checked;
       default: return el.value.trim();
     }
   }
@@ -479,6 +509,9 @@
     return '<article class="car" data-id="' + c.id + '"><div class="cimg">' + (c.photos && c.photos[0] ? '<img src="' + c.photos[0] + '" alt="">' : I('carfront', 66)) +
       (menu ? '<button class="kebab" data-menu="' + c.id + '" aria-label="Меню">' + I('grid', 24) + '</button>' : '') + '</div><div class="cinfo"><h3>' + esc(carName(c)) + '</h3><p>' + esc(c.body || '') + (c.alias ? ' · ' + esc(c.alias) : '') + (c.plate ? ' · ' + esc(c.plate) : '') + '</p><div class="yr">' + I('calendar', 24) + '<span>' + esc(c.year) + '</span></div></div></article>';
   }
+  function carRow(c) {
+    return '<article class="car row" data-id="' + c.id + '"><div class="rimg">' + (c.photos && c.photos[0] ? '<img src="' + c.photos[0] + '" alt="">' : I('carfront', 40)) + '</div><div class="rinfo"><h3>' + esc(carName(c)) + '</h3><p>' + esc([c.body, c.alias, c.plate].filter(Boolean).join(' · ')) + '</p><div class="tags"><span>' + I('calendar', 15) + c.year + '</span><span>' + I('gauge', 15) + fmtN(S.curMileage(c.id)) + ' ' + unit(c) + '</span></div></div><button class="kebab" data-menu="' + c.id + '" aria-label="Меню">' + I('more', 22) + '</button></article>';
+  }
   function evTitle(e) {
     var d = e.data || {}, k = M.cat(e.category), w = (d.works || [])[0];
     switch (e.category) {
@@ -486,6 +519,7 @@
       case 'diag': return k.label + (w && w.cat ? ' — ' + w.cat : '');
       case 'fuel': return k.label + (d.station ? ' — ' + d.station : '') + (d.liters ? ' · ' + d.liters + ' л' : '');
       case 'charge': return k.label + (d.station ? ' — ' + d.station : '');
+      case 'tire': return k.label + (d.tyType ? ' — ' + d.tyType : '');
       case 'insurance': return k.label + ' — ' + (d.company || '');
       case 'fine': return k.label + (d.paid ? ' (сплачено)' : ' (не сплачено)');
       case 'mileage': return 'Пробіг — ' + fmtN(e.mileage) + ' км';
@@ -520,6 +554,7 @@
     } else {
       sch.fields.forEach(function (f) {
         if (f.core) return;
+        if (f.t === 'bought') { if (d.bought) L.push(['Шини куплено', (d.tyreName || '') + (d.tyreCost ? ' · ' + money(d.tyreCost) : '')]); return; }
         var v = d[f.k]; if (v === '' || v == null || (v === false && f.t !== 'paid')) return;
         var s = f.t === 'money' ? ((f.k === 'liters' || f.k === 'kwh') ? v : money(v)) : f.t === 'date' ? fmtD(v) : f.t === 'paid' ? (v ? 'Сплачено' : 'Не сплачено') : f.k === 'newMileage' ? fmtN(v) + ' км' : v;
         L.push([f.l || 'Назва', String(s)]);
@@ -546,32 +581,38 @@
 
   /* ---------- Гараж ---------- */
   function garage() {
-    var seg = [['my', 'Мої авто'], ['shared', 'Поширені авто'], ['arch', 'Архів']];
+    var seg = [['my', 'Мої авто'], ['add', '+ Додати авто'], ['arch', 'Архів']];
     page({
       title: 'Мій гараж', left: true, nav: 'garage',
       body: '<div class="seg">' + seg.map(function (s) { return '<button data-tab="' + s[0] + '" class="' + (ui.tab === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
         '<div class="searchrow"><label class="search">' + I('search', 28) + '<input id="q" placeholder="Пошук авто" value="' + esc(ui.q) + '" autocomplete="off"></label><button class="sq" id="view" aria-label="Вигляд">' + I('grid', 26) + '</button></div><div id="cars"></div>' +
-        (ui.tab === 'my' ? '<button class="fab" id="add" aria-label="Додати авто">' + I('plus', 34) + '</button>' : '')
+        (ui.tab === 'my' ? '<button class="fab" id="add" aria-label="Додати запис">' + I('plus', 34) + '</button>' : '')
     });
     var draw = function () {
       var arch = ui.tab === 'arch', q = ui.q.trim().toLowerCase();
-      var cars = ui.tab === 'shared' ? [] : S.cars(arch).filter(function (c) { return !q || (carName(c) + ' ' + (c.alias || '') + ' ' + (c.plate || '')).toLowerCase().indexOf(q) >= 0; });
+      var cars = S.cars(arch).filter(function (c) { return !q || (carName(c) + ' ' + (c.alias || '') + ' ' + (c.plate || '')).toLowerCase().indexOf(q) >= 0; });
       $('#cars').className = 'cars ' + (ui.compact ? 'compact' : '');
-      $('#cars').innerHTML = cars.length ? cars.map(function (c) { return carCard(c, true); }).join('') :
-        '<p class="empty">' + (ui.tab === 'shared' ? 'Поширених авто ще немає' : arch ? 'Архів порожній' : q ? 'Нічого не знайдено' : 'У гаражі ще немає авто.<br>Натисніть «+», щоб додати') + '</p>';
+      $('#cars').innerHTML = cars.length ? cars.map(function (c) { return ui.compact ? carCard(c, true) : carRow(c); }).join('') :
+        '<p class="empty">' + (arch ? 'Архів порожній' : q ? 'Нічого не знайдено' : 'У гаражі ще немає авто.<br>Натисніть «+ Додати авто»') + '</p>';
     };
     draw();
     setH({
       click: function (e) {
         var t = e.target, b;
-        if ((b = t.closest('[data-tab]'))) { ui.tab = b.dataset.tab; garage(); return; }
+        if ((b = t.closest('[data-tab]'))) { if (b.dataset.tab === 'add') return go('#/car/new'); ui.tab = b.dataset.tab; garage(); return; }
         if (t.closest('#view')) { ui.compact = !ui.compact; draw(); return; }
-        if (t.closest('#add')) { go('#/car/new'); return; }
+        if (t.closest('#add')) return addRecordMenu();
         if ((b = t.closest('[data-menu]'))) { e.stopPropagation(); carActions(S.car(b.dataset.menu)); return; }
         if ((b = t.closest('.car'))) go('#/car/' + b.dataset.id);
       },
       input: function (e) { if (e.target.id === 'q') { ui.q = e.target.value; draw(); } }
     });
+  }
+  function addRecordMenu() {
+    var cars = S.cars(false);
+    if (!cars.length) return go('#/car/new');
+    if (cars.length === 1) return go('#/car/' + cars[0].id + '/record');
+    sheet('Додати запис — оберіть авто', cars.map(function (c) { return { label: carName(c) + (c.alias ? ' · ' + c.alias : ''), icon: 'carfront', fn: function () { go('#/car/' + c.id + '/record'); } }; }));
   }
   function carActions(c) {
     sheet(carName(c), [
@@ -746,9 +787,41 @@
           var n = $$('[data-work]').length + 1, d = document.createElement('div'); d.innerHTML = workCard(cat, n);
           $('#works').appendChild(d.firstChild); $$('[data-work]')[n - 1].scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
         }
+        if (e.target.closest('#tyedit')) return tyreSheet($('#f'));
         if (e.target.closest('#save')) saveRecord(id, cat);
+      },
+      change: function (e) {
+        if (e.target.name !== 'bought') return;
+        var f = $('#f');
+        if (e.target.checked) return tyreSheet(f);
+        f.querySelector('[name=tyreName]').value = ''; f.querySelector('[name=tyreCost]').value = ''; f.querySelector('.tyinfo').classList.add('hidden');
       }
     });
+  }
+  function tyreSheet(f) {
+    var nm = f.querySelector('[name=tyreName]'), co = f.querySelector('[name=tyreCost]'), cb = f.querySelector('[name=bought]'), info = f.querySelector('.tyinfo');
+    layer.innerHTML = '<div class="ov"><div class="sheet"><div class="grab"></div><h4>Які шини купили?</h4><div class="rr">' +
+      fld({ k: 'ty_name', t: 'text', l: 'Шини (марка, розмір)', req: 1, ph: 'напр. Michelin 205/55 R16' }, nm.value) +
+      fld({ k: 'ty_cost', t: 'money', l: 'Сума ₴', req: 1 }, co.value) +
+      '</div><button class="btn primary" id="tys" style="margin-top:20px">Зберегти</button><button class="si cancel">Скасувати</button></div></div>';
+    var L = function (n) { return layer.querySelector('[name=' + n + ']'); };
+    setTimeout(function () { L('ty_name').focus(); }, 50);
+    layer.oninput = function (e) {
+      var t = e.target;
+      if (t.hasAttribute('data-dec')) t.value = t.value.replace(',', '.').replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1');
+      t.closest('.fld').classList.remove('err');
+    };
+    layer.onclick = function (e) {
+      if (e.target.closest('#tys')) {
+        var n = L('ty_name').value.trim(), c = parseFloat(L('ty_cost').value);
+        L('ty_name').closest('.fld').classList.toggle('err', !n); L('ty_cost').closest('.fld').classList.toggle('err', !(c >= 0));
+        if (!n || !(c >= 0)) return;
+        nm.value = n; co.value = c; cb.checked = true;
+        info.firstChild.textContent = n + ' · ' + money(c); info.classList.remove('hidden');
+        return closeLayer();
+      }
+      if (e.target.classList.contains('ov') || e.target.closest('.cancel')) { if (!nm.value) cb.checked = false; closeLayer(); }
+    };
   }
   function done(id, ev, rems) {
     if (!S.putEvent(ev)) return toast('Не вдалося зберегти: закінчилося місце. Видаліть частину вкладень');
@@ -786,6 +859,12 @@
         if (ev.data.newMileage < cur) { form.querySelector('[data-k=newMileage]').classList.add('err'); return toast('Новий пробіг не може бути меншим за поточний (' + fmtN(cur) + ')'); }
         ev.mileage = ev.data.newMileage;
       }
+      if (cat === 'tire') {
+        ev.data.tyreName = form.querySelector('[name=tyreName]').value;
+        ev.data.tyreCost = ev.data.bought ? (parseFloat(form.querySelector('[name=tyreCost]').value) || 0) : 0;
+        if (!ev.data.bought) ev.data.tyreName = '';
+        if (ev.data.remDate || ev.data.remKm) rems.push({ title: 'Шиномонтаж: ' + (ev.data.tyType || 'нагадування'), date: ev.data.remDate || '', km: ev.data.remKm || 0, base: ev.mileage || S.curMileage(id), manual: false });
+      }
       if (cat === 'insurance') {
         ev.date = ev.data.start || today();
         rems.push({ title: 'Продовження страховки', date: ev.data.end, km: 0, base: 0, manual: false, auto: true });
@@ -805,10 +884,24 @@
     var i = cars.findIndex(function (c) { return c.id === ui.upCar; }), c = cars[i];
     var rs = S.reminders(c.id).filter(function (r) { return ui.upTab === 'mine' ? r.manual : ui.upTab === 'date' ? !!r.date : !!r.km; });
     rs.sort(function (a, b) { return (a.date || '9').localeCompare(b.date || '9'); });
+    var soon = [];
+    S.db.reminders.forEach(function (r) {
+      var cc = S.car(r.carId); if (!cc || cc.archived) return;
+      if (r.date) soon.push({ d: r.date, r: r, c: cc });
+      else if (r.km) soon.push({ d: '9999', r: r, c: cc });
+    });
+    soon.sort(function (a, b) { return a.d.localeCompare(b.d); });
+    var soonHtml = soon.length ? '<h2 class="h2" style="margin-top:6px">Нагадування</h2>' + soon.map(function (x) {
+      var r = x.r, dd = r.date ? days(r.date) : null, late = dd !== null && dd < 0, sub;
+      if (r.date) sub = (dd < 0 ? 'прострочено на ' + (-dd) + ' дн.' : dd === 0 ? 'сьогодні' : 'через ' + dd + ' дн.');
+      else { var lf = (r.base || 0) + r.km - S.curMileage(x.c.id); sub = lf < 0 ? 'перевищено на ' + fmtN(-lf) + ' ' + unit(x.c) : 'до ' + fmtN((r.base || 0) + r.km) + ' ' + unit(x.c); late = lf < 0; }
+      var badge = r.date ? '<b>' + r.date.slice(8) + '</b><small>' + M.MONTHS[+r.date.slice(5, 7) - 1] + '</small>' : '<b>' + I('gauge', 22) + '</b><small>км</small>';
+      return '<div class="rem dl"><span class="dbadge ' + (late ? 'late' : '') + '">' + badge + '</span><div class="evm"><b>' + esc(r.title) + '</b><small class="' + (late ? 'late' : '') + '">' + esc(carName(x.c) + ' · ' + (r.date ? fmtD(r.date) + ' · ' : '') + sub) + '</small></div></div>';
+    }).join('') + '<h2 class="h2">Керування по авто</h2>' : '';
     var tabs = [['mine', 'Створені мною'], ['date', 'Заплановані за датою'], ['km', 'Заплановані за пробігом']];
     page({
       title: 'Майбутні події', left: true, nav: 'upcoming',
-      body: '<div class="upcar"><button id="prev" aria-label="Попереднє">' + I('left', 26) + '</button><div class="uci">' + I('carfront', 40) + '</div><div style="flex:1"><b>' + esc(carName(c)) + '</b><small>' + c.year + '</small></div><button id="next" aria-label="Наступне">' + I('right', 26) + '</button></div>' +
+      body: soonHtml + '<div class="upcar"><button id="prev" aria-label="Попереднє">' + I('left', 26) + '</button><div class="uci">' + I('carfront', 40) + '</div><div style="flex:1"><b>' + esc(carName(c)) + '</b><small>' + c.year + '</small></div><button id="next" aria-label="Наступне">' + I('right', 26) + '</button></div>' +
         '<div class="pills">' + tabs.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (ui.upTab === t[0] ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') + '</div>' +
         (rs.length ? rs.map(function (r) {
           var sub = '', late = false;
@@ -904,9 +997,11 @@
   }
   function profile() {
     var cl = window.Cloud, user = cl && cl.user;
+    var mine = ''; try { mine = localStorage.getItem('mycar.avatar') || ''; } catch (er) {}
+    var pic = mine || (user && user.photoURL) || '';
     page({
       title: 'Профіль', left: true, nav: 'profile',
-      body: '<div class="ava">' + I('user', 46) + '</div><div class="pc"><b>' + esc(user ? (user.displayName || user.email || 'Користувач') : 'Гість') + '</b><small>' + (user ? esc(user.email || '') : (cl && cl.ready ? 'Увійдіть, щоб зберігати дані в хмарі' : 'Дані зберігаються на цьому пристрої')) + '</small></div>' +
+      body: '<button class="ava" id="ava" aria-label="Змінити фото профілю">' + (pic ? '<img src="' + esc(pic) + '" alt="" referrerpolicy="no-referrer">' : I('user', 46)) + '<span class="avac">' + I('edit', 16) + '</span></button><input type="file" id="avaf" hidden accept="image/*"><div class="pc"><b>' + esc(user ? (user.displayName || user.email || 'Користувач') : 'Гість') + '</b><small>' + (user ? esc(user.email || '') : (cl && cl.ready ? 'Увійдіть, щоб зберігати дані в хмарі' : 'Дані зберігаються на цьому пристрої')) + '</small></div>' +
         (cl && cl.ready ? (user ? '<button class="svc" id="out"><span class="evi">' + I('x', 22) + '</span><div><b>Вийти</b><small>Дані залишаться в хмарі</small></div></button>' : '<button class="btn primary" id="in" style="margin:18px 0 8px">Увійти через Google</button>') : '') +
         '<button class="svc" id="exp"><span class="evi">' + I('download', 22) + '</span><div><b>Резервна копія</b><small>Зберегти дані у файл JSON</small></div></button>' +
         '<button class="svc" id="imp"><span class="evi">' + I('upload', 22) + '</span><div><b>Відновити з копії</b><small>Замінить поточні дані</small></div></button><input type="file" id="impf" hidden accept="application/json,.json">' +
@@ -915,14 +1010,18 @@
     setH({
       click: function (e) {
         var t = e.target;
+        if (t.closest('#ava')) return $('#avaf').click();
         if (t.closest('#in')) return cl.signIn().catch(function (er) { toast('Не вдалося увійти: ' + (er.code || er.message)); });
-        if (t.closest('#out')) { try { localStorage.removeItem('mycar.guest'); } catch (er) {} return cl.signOut(); }
+        if (t.closest('#out')) { try { localStorage.removeItem('mycar.guest'); localStorage.removeItem('mycar.avatar'); } catch (er) {} return cl.signOut(); }
         if (t.closest('#imp')) return $('#impf').click();
         if (t.closest('#exp')) {
           var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([S.exportJSON()], { type: 'application/json' })); a.download = 'my-car-backup-' + today() + '.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
         }
       },
       change: function (e) {
+        if (e.target.id === 'avaf' && e.target.files[0]) {
+          return shrinkSquare(e.target.files[0], 256, 0.85).then(function (u) { try { localStorage.setItem('mycar.avatar', u); } catch (er) { return toast('Не вдалося зберегти фото'); } toast('Фото профілю оновлено'); profile(); }, function (er) { toast(er.message); });
+        }
         if (e.target.id !== 'impf' || !e.target.files[0]) return;
         var r = new FileReader();
         r.onload = function () {
