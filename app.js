@@ -266,7 +266,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '1.0.11';
+  var VERSION = '1.0.12';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
