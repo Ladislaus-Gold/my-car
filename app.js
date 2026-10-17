@@ -266,7 +266,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '1.0.10';
+  var VERSION = '1.0.11';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -699,6 +699,10 @@
   }
 
   /* ---------- Об авто ---------- */
+  function totalBar(evs, label) {
+    var sum = 0; evs.forEach(function (e) { sum += S.costOf(e); });
+    return evs.length ? '<div class="tot"><div><b>Итого' + (label ? ' · ' + label : '') + '</b><small>записей: ' + evs.length + '</small></div><span>' + money(sum) + '</span></div>' : '';
+  }
   function about(id) {
     var c = S.car(id); if (!c) return go('#/garage');
     var evs = S.events(id);
@@ -707,7 +711,7 @@
       body: carCard(c, false) + '<a class="btn primary" style="margin-top:22px;height:62px" href="#/car/' + id + '/record">' + I('plus', 26) + ' Добавить запись</a>' +
         '<h2 class="h2">Категории событий</h2><div class="chips">' + M.CATS.map(function (k) { return '<a class="chip ' + k.cls + '" href="#/car/' + id + '/history/' + k.id + '">' + catI(k, 22) + '<span>' + k.label + '</span></a>'; }).join('') + '</div>' +
         '<div class="rowh"><h2 class="h2">История событий</h2><a class="link" href="#/car/' + id + '/history">Смотреть все</a></div>' +
-        (evs.length ? evs.slice(0, 5).map(evRow).join('') : '<p class="empty">Событий пока нет</p>')
+        (evs.length ? evs.slice(0, 5).map(evRow).join('') : '<p class="empty">Событий пока нет</p>') + totalBar(evs, 'за всё время')
     });
     setH({ click: function (e) { if (e.target.closest('#acts')) return carActions(c); var b = e.target.closest('[data-ev]'); if (b) showEvent(S.db.events.find(function (x) { return x.id === b.dataset.ev; })); } });
   }
@@ -718,7 +722,7 @@
       title: 'История событий', back: '#/car/' + id,
       body: '<div class="chips flt"><a class="chip all ' + (!cat ? 'on' : '') + '" href="#/car/' + id + '/history">Все</a>' +
         M.CATS.map(function (k) { return '<a class="chip ' + k.cls + ' ' + (cat === k.id ? 'on' : '') + '" href="#/car/' + id + '/history/' + k.id + '">' + catI(k, 18) + '<span>' + k.label + '</span></a>'; }).join('') + '</div>' +
-        (evs.length ? evs.map(evRow).join('') : '<p class="empty">Событий пока нет</p>')
+        (evs.length ? evs.map(evRow).join('') : '<p class="empty">Событий пока нет</p>') + totalBar(evs, cat ? M.cat(cat).label : 'все события')
     });
     setH({ click: function (e) { var b = e.target.closest('[data-ev]'); if (b) showEvent(S.db.events.find(function (x) { return x.id === b.dataset.ev; })); } });
   }

@@ -280,3 +280,6 @@ html,body{width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior:none;t
 .pkt{min-width:0;padding:0 12px;gap:10px;font-size:17px}
 .pkt span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lg{overflow:hidden}
+
+.tot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;padding:16px 20px;border-radius:22px;background:linear-gradient(135deg,#8b5cf6,#6d3fe0);color:#fff;box-shadow:0 10px 24px rgba(109,63,224,.28)}
+.tot b{display:block;font-size:17px;font-weight:700}.tot small{opacity:.85;font-size:14px}.tot span{font-size:23px;font-weight:800;white-space:nowrap}
