@@ -248,3 +248,25 @@ a.al{text-decoration:none;color:inherit}
 .cbm small{color:var(--mut);font-size:13px}
 .track{height:8px;border-radius:6px;background:#eeeef4;margin:6px 0 4px;overflow:hidden}.track i{display:block;height:100%;border-radius:6px}
 .stat b{font-size:24px}
+
+.emo{line-height:1;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;display:inline-block}
+.evi .emo,.cbi .emo{font-size:22px}
+.rhero{position:relative;overflow:hidden;border-radius:28px;padding:26px 22px;min-height:132px;display:flex;align-items:flex-end;color:#fff;background:linear-gradient(145deg,#8b5cf6,#5b34d6 60%,#4c2bb8);box-shadow:0 12px 30px rgba(109,63,224,.3)}
+.rhero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rhero.hasp::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(20,10,50,.85),rgba(20,10,50,.15))}
+.rhero .hdeco{right:-18px;top:-6px}.rhero .hdeco svg{width:150px;height:150px}
+.rh-in{position:relative;z-index:1;display:flex;align-items:center;gap:14px}
+.rh-in b{display:block;font-size:26px;font-weight:800;line-height:1.1}.rh-in small{opacity:.9;font-size:16px}
+.pk-t{font-size:22px;font-weight:700;margin:26px 2px 14px}
+.pk{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pkt{display:flex;align-items:center;gap:12px;height:68px;padding:0 16px;border-radius:20px;border:1.5px solid #ece8f7;background:#fff;font-size:18px;font-weight:600;color:#374151;cursor:pointer;text-align:left;transition:.15s}
+.pkt .pke{font-size:28px;width:44px;height:44px;border-radius:14px;background:#f4f1fd;display:grid;place-items:center;flex:none}
+.pkt.picked{border-color:var(--p);background:#f1edff;color:var(--pd);box-shadow:0 6px 16px rgba(139,92,246,.22)}
+.pkt.picked .pke{background:#fff}
+
+.pkt{background:color-mix(in srgb,var(--c) 11%,#fff);border-color:color-mix(in srgb,var(--c) 28%,#fff);color:color-mix(in srgb,var(--c) 78%,#000)}
+.pkt .pke{background:#fff}
+.pkt.picked{background:color-mix(in srgb,var(--c) 20%,#fff);border-color:var(--c);color:color-mix(in srgb,var(--c) 78%,#000);box-shadow:0 6px 16px color-mix(in srgb,var(--c) 30%,transparent)}
+
+.seg button{white-space:nowrap}
+.rng{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.rng label{font-size:14px;color:var(--mut);display:block}.rng .inp{margin-top:4px;width:100%}
