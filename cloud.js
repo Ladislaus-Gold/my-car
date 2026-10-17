@@ -1,6 +1,6 @@
 /* Firebase: вхід через Google + синхронізація з Cloud Firestore.
    Структура даних: users/{uid}/cars|events|reminders/{id}
-   SDK підтягується лише тоді, коли в js/firebase-config.js заповнено window.FIREBASE_CONFIG. */
+   SDK підтягується лише тоді, коли в firebase-config.js заповнено window.FIREBASE_CONFIG. */
 const cfg = window.FIREBASE_CONFIG;
 const Cloud = window.Cloud;
 const KINDS = ['cars', 'events', 'reminders'];
