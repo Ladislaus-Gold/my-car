@@ -1,6 +1,9 @@
-# My CAR — Summary (v1.0.9)
+# My CAR — Summary (v1.0.10)
 
 Мобильное веб-приложение учёта обслуживания авто. GitHub Pages: https://ladislaus-gold.github.io/my-car/ · Firebase: проект my-car-dfb42 (Google-вход, Firestore).
+
+## Версия 1.0.10 (2026-10-17)
+- Адаптация под телефон (ширина 480), жёсткая рамка без сдвига, мгновенный запуск, кэш sw.js
 
 ## Версия 1.0.9 (2026-10-17)
 - Вкладка «Аналитика» вместо «Услуги»; свой период (даты С/По); пояснение расчёта стоимости 1 км
@@ -16,7 +19,7 @@
 - Марка топлива, выбор даты (по умолчанию сегодня), статусы подключения, кнопка обновления
 
 ## Структура (плоская, без папок)
-index.html, styles.css, app.js, cloud.js, firebase-config.js, manifest.webmanifest, icon.svg, firestore.rules, version.json, README.md, CHANGELOG.md
+index.html, styles.css, app.js, cloud.js, firebase-config.js, manifest.webmanifest, icon.svg, firestore.rules, version.json, sw.js, README.md, CHANGELOG.md
 
 ## Правила работы
 - Каждая версия — новый номер (виден в Профиле внизу)

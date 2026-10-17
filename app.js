@@ -266,7 +266,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '1.0.9';
+  var VERSION = '1.0.10';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -1166,11 +1166,13 @@
 
   /* ---------- вхід, реєстрація, перші запитання про авто ---------- */
   var isGuest = function () { try { return localStorage.getItem('mycar.guest') === '1'; } catch (e) { return false; } };
+  var hint = function () { try { return localStorage.getItem('mycar.hint') === '1'; } catch (e) { return false; } };
   function guard(h) {
     var C = window.Cloud || {};
-    if (C.pending && !C.authChecked) return 'splash';
-    if (!C.user && !isGuest()) return h === '#/login' ? '' : '#/login';
-    if (C.active && !C.synced) return 'splash';
+    var warm = hint() && S.db.cars.length; /* уже входили на этом устройстве — открываем сразу из локальных данных */
+    if (C.pending && !C.authChecked && !warm) return 'splash';
+    if (!C.user && !isGuest() && !(warm && !C.authChecked)) return h === '#/login' ? '' : '#/login';
+    if (C.active && !C.synced && !warm) return 'splash';
     if (h === '#/login') return '#/garage';
     if (h === '#/garage' && !S.db.cars.length && !ui.skipOb) return '#/welcome';
     if (h === '#/welcome' && S.db.cars.length && !ui.obBusy) return '#/garage';
@@ -1272,4 +1274,5 @@
   if (/[?&]u=/.test(location.search)) { try { window.history.replaceState(null, '', location.pathname + location.hash); } catch (e) {} }
   render();
   checkVersion();
+  try { if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js?v=' + VERSION).catch(function () {}); } catch (e) {}
 })();

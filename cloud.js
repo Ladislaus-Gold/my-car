@@ -33,6 +33,7 @@ if (cfg && cfg.apiKey) {
 
     Au.onAuthStateChanged(auth, (u) => {
       unsubs.forEach((f) => f()); unsubs = [];
+      try { u ? localStorage.setItem('mycar.hint', '1') : localStorage.removeItem('mycar.hint'); } catch (e) {}
       Cloud.user = u; Cloud.active = !!u; Cloud.authChecked = true; Cloud.synced = false; first = true;
       if (!u) return changed();
       setTimeout(() => { if (!Cloud.synced) { Cloud.synced = true; changed(); } }, 8000);

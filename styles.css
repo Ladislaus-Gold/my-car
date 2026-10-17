@@ -270,3 +270,13 @@ a.al{text-decoration:none;color:inherit}
 
 .seg button{white-space:nowrap}
 .rng{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.rng label{font-size:14px;color:var(--mut);display:block}.rng .inp{margin-top:4px;width:100%}
+/* жёсткая рамка: без горизонтального сдвига, шапка и нижняя панель на месте */
+html,body{width:100%;max-width:100%;overflow-x:hidden;overscroll-behavior:none;touch-action:pan-y;-webkit-text-size-adjust:100%}
+#app{overflow-x:clip;width:100%}
+.page,.body{max-width:100%;overflow-x:clip}
+.top{position:sticky;top:0;z-index:20;transform:translateZ(0)}
+.tabbar{position:sticky;bottom:0;z-index:20}
+.pk{grid-template-columns:repeat(2,minmax(0,1fr))}
+.pkt{min-width:0;padding:0 12px;gap:10px;font-size:17px}
+.pkt span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lg{overflow:hidden}
