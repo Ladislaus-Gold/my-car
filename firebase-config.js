@@ -1,15 +1,10 @@
-/* Конфігурація Firebase (Project settings → General → Your apps → Web app → SDK setup and configuration).
-   Поки тут null — застосунок працює локально (дані в браузері). Після заповнення вмикається вхід через Google
-   і збереження даних у Cloud Firestore.
-   Ці значення НЕ секретні (це публічні ідентифікатори вебзастосунку); захист даних забезпечують firestore.rules. */
-window.FIREBASE_CONFIG = null;
-/* Приклад:
+/* Конфігурація Firebase-проєкту My Car (my-car-dfb42).
+   Це публічні ідентифікатори вебзастосунку, не секрети; дані захищають firestore.rules. */
 window.FIREBASE_CONFIG = {
-  apiKey: "AIza...",
-  authDomain: "my-car-xxxxx.firebaseapp.com",
-  projectId: "my-car-xxxxx",
-  storageBucket: "my-car-xxxxx.firebasestorage.app",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abcdef"
+  apiKey: "AIzaSyBV6eiaNrvCG2WLR74ADrc_XMtzPRIUQow",
+  authDomain: "my-car-dfb42.firebaseapp.com",
+  projectId: "my-car-dfb42",
+  storageBucket: "my-car-dfb42.firebasestorage.app",
+  messagingSenderId: "61398378008",
+  appId: "1:61398378008:web:6acc09864893a49ed5456d"
 };
-*/

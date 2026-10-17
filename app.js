@@ -246,6 +246,8 @@
 })();
 (function () {
   'use strict';
+  var VERSION = '1.0.1';
+  window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
@@ -908,7 +910,7 @@
         (cl && cl.ready ? (user ? '<button class="svc" id="out"><span class="evi">' + I('x', 22) + '</span><div><b>Вийти</b><small>Дані залишаться в хмарі</small></div></button>' : '<button class="btn primary" id="in" style="margin:18px 0 8px">Увійти через Google</button>') : '') +
         '<button class="svc" id="exp"><span class="evi">' + I('download', 22) + '</span><div><b>Резервна копія</b><small>Зберегти дані у файл JSON</small></div></button>' +
         '<button class="svc" id="imp"><span class="evi">' + I('upload', 22) + '</span><div><b>Відновити з копії</b><small>Замінить поточні дані</small></div></button><input type="file" id="impf" hidden accept="application/json,.json">' +
-        '<p class="hint" style="text-align:center;margin-top:26px">My CAR · ' + S.db.cars.length + ' авто · ' + S.db.events.length + ' записів</p>'
+        '<p class="hint" style="text-align:center;margin-top:26px">My CAR v' + VERSION + ' · ' + S.db.cars.length + ' авто · ' + S.db.events.length + ' записів</p>'
     });
     setH({
       click: function (e) {
@@ -953,7 +955,7 @@
     app.innerHTML = '<div class="lg"><img src="icon.svg" alt="My CAR"><h1>My CAR</h1><p class="wsub">Облік обслуговування, ремонтів, пального, страховок і штрафів вашого авто — в одному місці</p>' +
       '<button class="gbtn" id="gin">' + GLOGO + '<span>Увійти через Gmail</span></button>' +
       '<p class="hint" style="max-width:320px;text-align:center">Реєстрація відбувається автоматично під час першого входу з вашим акаунтом Google</p>' +
-      (C.ready ? '' : '<button class="link" id="guest" style="font-size:17px;margin-top:6px">Продовжити без входу</button>') + '</div>';
+      (C.ready ? '' : '<button class="link" id="guest" style="font-size:17px;margin-top:6px">Продовжити без входу</button>') + '<p class="hint">Версія ' + VERSION + '</p></div>';
     setH({
       click: function (e) {
         if (e.target.closest('#guest')) { try { localStorage.setItem('mycar.guest', '1'); } catch (er) {} return render(); }
