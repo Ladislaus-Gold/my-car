@@ -268,7 +268,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.0.14';
+  var VERSION = '2.0.15';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -969,19 +969,16 @@
   /* ---------- Создать запись ---------- */
   function recordPick(id) {
     var c = S.car(id); if (!c) return go('#/garage');
-    var sel = '';
     page({
       title: 'Создать запись', back: '#/car/' + id, dark: 1, right: '',
       body: '<div class="rhero' + (c.photos && c.photos[0] ? ' hasp' : '') + '">' + (c.photos && c.photos[0] ? '<img src="' + c.photos[0] + '" alt="">' : '<span class="hdeco">' + I('carfront', 150) + '</span>') +
-        '<div class="rh-in">' + emblem(c) + '<div><b>' + esc(carName(c)) + '</b><small>' + c.year + ' · ' + fmtN(S.curMileage(id)) + ' ' + unit(c) + (c.plate ? ' · ' + esc(c.plate) : '') + '</small></div></div></div>' +
-        '<h2 class="pk-t">Что записываем?</h2><div class="pk">' + M.CATS.map(function (k) { return '<button class="pkt" data-cat="' + k.id + '" style="--c:' + PKC[k.id] + '"><span class="pke">' + (EMO[k.id] || '📌') + '</span><span>' + k.label + '</span></button>'; }).join('') + '</div>',
-      footer: '<button class="btn primary" id="go" disabled>Продолжить</button>'
+        '<div class="rh-in"><div><b>' + esc(carName(c)) + '</b><small>' + c.year + ' · ' + fmtN(S.curMileage(id)) + ' ' + unit(c) + (c.plate ? ' · ' + esc(c.plate) : '') + '</small></div></div></div>' +
+        '<h2 class="pk-t">Что записываем?</h2><div class="pk">' + M.CATS.map(function (k) { return '<button class="pkt" data-cat="' + k.id + '" style="--c:' + PKC[k.id] + '"><span class="pke">' + (EMO[k.id] || '📌') + '</span><span>' + k.label + '</span></button>'; }).join('') + '</div>'
     });
     setH({
       click: function (e) {
         var b = e.target.closest('[data-cat]');
-        if (b) { sel = b.dataset.cat; $$('.pkt').forEach(function (x) { x.classList.toggle('picked', x === b); }); $('#go').disabled = false; return; }
-        if (e.target.closest('#go') && sel) go('#/car/' + id + '/record/' + sel);
+        if (b) { b.classList.add('picked'); go('#/car/' + id + '/record/' + b.dataset.cat); }
       }
     });
   }
