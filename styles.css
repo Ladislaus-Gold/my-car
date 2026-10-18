@@ -392,3 +392,15 @@ body{overflow-x:clip;overflow-y:visible}
 .rng .inp,.gpr .inp,.sumc .rng .inp{margin-top:0;height:40px;font-size:14px;padding:0 8px;flex:1;min-width:0;width:auto;text-align:center;border-radius:12px}
 
 .lg img,.lg img.biglogo{width:min(300px,82vw);height:auto;border-radius:28px;box-shadow:0 10px 30px rgba(0,30,20,.28)}
+
+/* компактная шапка гаража (2.0.20) */
+.page:has(.searchrow) .top{min-height:44px;padding-top:calc(6px + env(safe-area-inset-top));padding-bottom:2px}
+.page:has(.searchrow) .top.left h1{font-size:22px}
+.seg:has(+ .searchrow){padding:3px;border-radius:18px;margin-top:2px}
+.seg:has(+ .searchrow) button{height:34px;border-radius:15px;font-size:14px}
+.searchrow{gap:8px;margin:8px 0 12px}
+.searchrow .search{height:38px;padding:0 14px;gap:10px;border-radius:19px}
+.searchrow .search svg{width:20px;height:20px}
+.searchrow .search input{font-size:15px}
+.searchrow .sq{width:38px;height:38px;min-width:38px;border-radius:19px;padding:0;display:grid;place-items:center}
+.searchrow .sq svg{width:20px;height:20px}
