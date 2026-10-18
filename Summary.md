@@ -1,6 +1,9 @@
-# My CAR — Summary (v2.0.18)
+# My CAR — Summary (v2.0.19)
 
 Мобильное веб-приложение учёта обслуживания авто. GitHub Pages: https://ladislaus-gold.github.io/my-car/ · Firebase: проект my-car-dfb42 (Google-вход, Firestore).
+
+## Версия 2.0.19 (2026-10-18)
+- Новый логотип: logo.png (полный), иконки 192/512/apple-touch — силуэт авто
 
 ## Версия 2.0.18 (2026-10-18)
 - Вкладка «События», компактный выбор своего периода в один ряд
