@@ -268,7 +268,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.0.20';
+  var VERSION = '2.0.24';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -1358,12 +1358,13 @@
     for (var i = nM - 1; i >= 0; i--) { var dm = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push({ key: dm.getFullYear() + '-' + pad(dm.getMonth() + 1), label: M.MONTHS[dm.getMonth()], parts: {}, sum: 0 }); }
     all.forEach(function (e) { if (e.category === 'mileage') return; var m = months.find(function (x) { return e.date.indexOf(x.key) === 0; }); var c = S.costOf(e); if (m && c) { m.parts[e.category] = (m.parts[e.category] || 0) + c; m.sum += c; } });
     var max = Math.max.apply(null, months.map(function (m) { return m.sum; }).concat([1])), mag = Math.pow(10, Math.floor(Math.log10(max))), nice = Math.ceil(max / mag) * mag;
-    var W = 340, H = 230, L = 52, B = 34, T = 14, ch = H - B - T, slot = (W - L - 6) / months.length, bw = Math.min(30, slot * 0.62), svg = '';
+    var W = 340, H = 230, L = 52, B = 34, T = 14, ch = H - B - T, slot = (W - L - 6) / months.length, bw = Math.min(30, slot * 0.62), svg = '<defs><linearGradient id="bgl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>';
     for (var g = 0; g <= 3; g++) { var y = T + ch - ch * g / 3, v = nice * g / 3; svg += '<line x1="' + L + '" x2="' + (W - 6) + '" y1="' + y + '" y2="' + y + '" stroke="#ececf2"/><text x="' + (L - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + (v >= 1000 ? Math.round(v / 100) / 10 + 'к' : Math.round(v)) + '</text>'; }
     months.forEach(function (m, j) {
-      var x = L + slot * j + slot / 2, yb = T + ch;
-      M.CATS.forEach(function (k) { var p = m.parts[k.id]; if (!p) return; var h = ch * p / nice; yb -= h; svg += '<rect x="' + (x - bw / 2) + '" y="' + yb + '" width="' + bw + '" height="' + Math.max(h, 1) + '" fill="' + (CC[k.id] || '#999') + '"/>'; });
-      svg += '<text x="' + x + '" y="' + (H - 10) + '" text-anchor="middle">' + m.label + '</text>';
+      var x = L + slot * j + slot / 2, yb = T + ch, seg = '';
+      M.CATS.forEach(function (k) { var p = m.parts[k.id]; if (!p) return; var h = ch * p / nice; yb -= h; seg += '<rect x="' + (x - bw / 2) + '" y="' + yb + '" width="' + bw + '" height="' + Math.max(h, 1) + '" fill="' + (CC[k.id] || '#999') + '"/>'; });
+      if (seg) { var th = T + ch - yb, rr = Math.min(bw / 2, th / 2, 14); svg += '<clipPath id="bc' + j + '"><rect x="' + (x - bw / 2) + '" y="' + yb + '" width="' + bw + '" height="' + Math.max(th, 1) + '" rx="' + rr + '"/></clipPath><g clip-path="url(#bc' + j + ')">' + seg + '<rect x="' + (x - bw / 2) + '" y="' + yb + '" width="' + bw + '" height="' + Math.max(th, 1) + '" fill="url(#bgl)"/></g>'; }
+      svg += '<text x="' + x + '" y="' + (H - 10) + '" text-anchor="middle"' + (slot < 30 ? ' style="font-size:10px"' : '') + '>' + m.label + '</text>';
     });
     var cats = M.CATS.filter(function (k) { return byCat[k.id] && byCat[k.id].sum > 0; }).sort(function (a, b) { return byCat[b.id].sum - byCat[a.id].sum; });
     var legend = '<div class="lgd">' + cats.map(function (k) { return '<span><i style="background:' + CC[k.id] + '"></i>' + k.label + '</span>'; }).join('') + '</div>';
