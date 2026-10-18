@@ -441,3 +441,7 @@ body{overflow-x:clip;overflow-y:visible}
 .stat.wide b,.stat.wide b[style]{color:var(--pd)!important}
 .stat.wide b[style]{opacity:1;color:var(--mut)!important}
 html[data-theme=dark] .stat.wide b{color:var(--p)!important}
+
+/* калькулятор: SVG-иконки */
+.calcb{font-size:0;color:var(--p)}.calcb svg{width:22px;height:22px}
+.calc .ck svg{width:24px;height:24px}

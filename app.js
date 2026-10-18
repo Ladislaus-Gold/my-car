@@ -38,7 +38,15 @@
     img: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
     tire: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21"/>',
     refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',
-    chart: '<path d="M3 3v18h18M7 15v3M12 10v8M17 6v12"/>'
+    chart: '<path d="M3 3v18h18M7 15v3M12 10v8M17 6v12"/>',
+    calc: '<rect x="4" y="2" width="16" height="20" rx="3"/><path d="M8 6h8v4H8z"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
+    backspace: '<path d="M21 5H9l-7 7 7 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M18 9l-6 6M12 9l6 6"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+    phone: '<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 1.9 0 2.7 5 1.4 5 4.2 0 1.1-1.1 1.9-2.5 1.9-1.1 0-2-.4-2.5-1.2M12 6v2M12 16v2"/>',
+    alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/>',
+    pin: '<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>'
   };
   window.I = function (n, s, cls) {
     s = s || 24;
@@ -268,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.0.26';
+  var VERSION = '2.0.28';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -464,7 +472,7 @@
     var expr = input.value ? String(input.value) : '', res = null, host = document.createElement('div'); host.id = 'calc';
     var keys = ['C', '⌫', '÷', '×', '7', '8', '9', '−', '4', '5', '6', '+', '1', '2', '3', '=', '0', '.', '00', 'OK'];
     host.innerHTML = '<div class="ov"><div class="sheet calc"><div class="grab"></div><div class="cx"><small></small><b></b></div><div class="ck">' +
-      keys.map(function (k) { return '<button type="button" data-k="' + k + '" class="' + (/[÷×−+]/.test(k) ? 'op' : k === '=' ? 'eq' : k === 'OK' ? 'ok' : k === 'C' || k === '⌫' ? 'fn' : '') + '">' + (k === 'OK' ? 'Готово' : k) + '</button>'; }).join('') + '</div></div></div>';
+      keys.map(function (k) { return '<button type="button" data-k="' + k + '" class="' + (/[÷×−+]/.test(k) ? 'op' : k === '=' ? 'eq' : k === 'OK' ? 'ok' : k === 'C' || k === '⌫' ? 'fn' : '') + '">' + (k === 'OK' ? 'Готово' : k === '⌫' ? I('backspace', 24) : k) + '</button>'; }).join('') + '</div></div></div>';
     document.body.appendChild(host);
     var sm = host.querySelector('small'), bg = host.querySelector('.cx b');
     function draw() { var live = null; try { live = calcEval(expr); } catch (e) {} bg.textContent = expr === '' ? '0' : expr.replace(/\*/g, '×'); sm.textContent = res !== null ? '= ' + res : (live !== null && /[÷×−+]/.test(expr.slice(1)) ? '= ' + live : ''); }
@@ -630,7 +638,7 @@
     switch (f.t) {
       case 'date': inp = dateInp(f.k, (v === '' && (f.k === 'date' || f.k === 'start')) ? today() : v, f.slash); break;
       case 'num': inp = '<input class="inp" name="' + f.k + '" inputmode="numeric" data-num autocomplete="off" placeholder="' + esc(f.ph || '') + '" value="' + esc(v) + '">'; break;
-      case 'money': inp = '<div class="moneyw"><input class="inp" name="' + f.k + '" inputmode="decimal" data-dec autocomplete="off" placeholder="' + esc(f.ph || '0.00') + '" value="' + esc(v) + '"><button type="button" class="calcb" data-calc aria-label="Калькулятор">🧮</button></div>'; break;
+      case 'money': inp = '<div class="moneyw"><input class="inp" name="' + f.k + '" inputmode="decimal" data-dec autocomplete="off" placeholder="' + esc(f.ph || '0.00') + '" value="' + esc(v) + '"><button type="button" class="calcb" data-calc aria-label="Калькулятор">' + I('calc', 24) + '</button></div>'; break;
       case 'text': inp = '<input class="inp" name="' + f.k + '" autocomplete="off" placeholder="' + esc(f.ph || '') + '" value="' + esc(v) + '">'; break;
       case 'textarea': inp = '<textarea class="inp" name="' + f.k + '" placeholder="' + esc(f.ph || '') + '">' + esc(v) + '</textarea>'; break;
       case 'select': inp = selectEl(f.k, f.opts, v, f.ph); break;
@@ -1069,7 +1077,7 @@
     if (sch.kind === 'works') {
       body = sch.head.map(function (f) { return fld(f, fv(f)); }).join('') + '<div id="works">' + workCard(cat, 1) + '</div>' +
         '<section class="card sumcard"><div class="fld" data-k="note"><label class="lbl">Заметка</label><textarea class="inp" name="note" placeholder="Заметка ко всему событию"></textarea></div>' +
-        '<div class="fld" data-k="total"><label class="lbl">Общая сумма ₴</label><div class="moneyw"><input class="inp" name="total" inputmode="decimal" data-dec placeholder="0.00" autocomplete="off"><button type="button" class="calcb" data-calc aria-label="Калькулятор">🧮</button></div></div>' + attBox('Вложения ко всему событию', 'final') + '</section>' +
+        '<div class="fld" data-k="total"><label class="lbl">Общая сумма ₴</label><div class="moneyw"><input class="inp" name="total" inputmode="decimal" data-dec placeholder="0.00" autocomplete="off"><button type="button" class="calcb" data-calc aria-label="Калькулятор">' + I('calc', 24) + '</button></div></div>' + attBox('Вложения ко всему событию', 'final') + '</section>' +
         '<button type="button" class="btn outline" id="addw" style="margin-top:22px">' + I('plus', 22) + ' ' + sch.addLabel + '</button>';
     } else if (cat === 'mileage') {
       body = '<div class="infobox blue">' + I('info', 30) + '<div><b>Запись пробега</b>Фиксируйте текущий пробег автомобиля для точного отслеживания истории обслуживания и планирования будущих событий.</div></div>' +
