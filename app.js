@@ -102,10 +102,12 @@
         .sort(function (a, b) { return (b.date || '').localeCompare(a.date || '') || (b.createdAt - a.createdAt); });
     },
     putEvent: function (e) {
-      var c = S.car(e.carId), old = c ? c.mileage : 0;
-      db.events.push(e);
-      if (c && e.mileage && e.mileage > (c.mileage || 0)) c.mileage = e.mileage;
-      if (!save()) { db.events.pop(); if (c) c.mileage = old; return false; }
+      var c = S.car(e.carId), old = c ? c.mileage : 0, idx = db.events.findIndex(function (x) { return x.id === e.id; }), prev = idx >= 0 ? db.events[idx] : null;
+      if (prev) db.events[idx] = e; else db.events.push(e);
+      if (c && prev && prev.mileage && prev.mileage === c.mileage && e.mileage < prev.mileage) {
+        var mx = e.mileage || 0; db.events.forEach(function (x) { if (x.carId === c.id && x.id !== e.id && x.mileage > mx) mx = x.mileage; }); c.mileage = mx;
+      } else if (c && e.mileage && e.mileage > (c.mileage || 0)) c.mileage = e.mileage;
+      if (!save()) { if (prev) db.events[idx] = prev; else db.events.pop(); if (c) c.mileage = old; return false; }
       cloud('set', 'events', e);
       if (c && c.mileage !== old) cloud('set', 'cars', c);
       return true;
@@ -234,7 +236,7 @@
       { k: 'cost', t: 'money', l: 'Стоимость ₴', req: 1 },
       { k: 'station', t: 'text', l: 'Станция', ph: 'Название станции' }] },
     wash: { fields: [DATE, MILE,
-      { k: 'amount', t: 'money', l: 'Сумма ₴', req: 1 },
+      { k: 'amount', t: 'money', l: 'Стоимость мойки ₴', req: 1 },
       { k: 'washType', t: 'select', l: 'Тип мойки', req: 1, ph: 'Выберите тип мойки', opts: OPTS.wash },
       { k: 'note', t: 'textarea', l: 'Примечание', ph: 'Примечание' }] },
     fine: { fields: [DATE, MILE,
@@ -254,7 +256,7 @@
       { k: 'policy', t: 'text', l: 'Номер полиса' },
       { k: 'start', t: 'date', l: 'Дата начала' },
       { k: 'end', t: 'date', l: 'Дата окончания', req: 1 },
-      { k: 'amount', t: 'money', l: 'Сумма ₴', req: 1 }] },
+      { k: 'amount', t: 'money', l: 'Стоимость полиса ₴', req: 1 }] },
     mileage: { fields: [DATE, { k: 'newMileage', t: 'num', l: 'Новый пробег (км)', req: 1, ph: 'напр. 125 000' },
       { k: 'note', t: 'textarea', l: 'Примечание', ph: 'Примечание' }] }
   };
@@ -266,7 +268,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.0.7';
+  var VERSION = '2.0.11';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -372,15 +374,21 @@
   function closeLayer() { layer.innerHTML = ''; layer.onclick = null; }
 
   /* ---------- шаблон сторінки ---------- */
+  function kmPart(r, c) {
+    if (!r.km) return '';
+    var left = (r.base || 0) + r.km - S.curMileage(c.id);
+    return left < 0 ? 'превышено на ' + fmtN(-left) + ' ' + unit(c) : 'до ' + fmtN((r.base || 0) + r.km) + ' ' + unit(c) + ' (ещё ' + fmtN(left) + ')';
+  }
   function alerts() {
     var out = [], t = today();
     S.db.reminders.forEach(function (r) {
       var c = S.car(r.carId); if (!c || c.archived) return;
+      var pushed = false;
       if (r.date) {
         var d = days(r.date);
-        if (d <= 30) out.push({ late: d < 0, when: d, title: r.title, sub: carName(c) + ' · ' + fmtD(r.date) + ' · ' + (d < 0 ? 'просрочено на ' + (-d) + ' дн.' : d === 0 ? 'сегодня' : 'через ' + d + ' дн.') });
+        if (d <= 30) pushed = true, out.push({ late: d < 0, when: d, title: r.title, sub: carName(c) + ' · ' + fmtD(r.date) + ' · ' + (d < 0 ? 'просрочено на ' + (-d) + ' дн.' : d === 0 ? 'сегодня' : 'через ' + d + ' дн.') + (r.km ? ' · ' + kmPart(r, c) : '') });
       }
-      if (r.km) {
+      if (r.km && !pushed) {
         var left = (r.base || 0) + r.km - S.curMileage(c.id);
         if (left <= 1000) out.push({ late: left < 0, when: left / 100, title: r.title, sub: carName(c) + ' · ' + (left < 0 ? 'превышено на ' + fmtN(-left) : 'осталось ' + fmtN(left)) + ' ' + unit(c) });
       }
@@ -449,6 +457,7 @@
     var t = e.target, b;
     if (type === 'click') {
       if (t.closest('[data-upd]')) { doUpdate(); return true; }
+      if (t.closest('i.req')) { toast('Обязательное поле — без него нельзя сохранить'); return true; }
       if ((b = t.closest('.datew .cal'))) {
         var dw = b.closest('.datew'), nat = dw.querySelector('.native'), txt = dw.querySelector('.dt');
         nat.value = parseD(txt.value) || '';
@@ -790,10 +799,11 @@
     layer.innerHTML = '<div class="ov"><div class="sheet"><div class="grab"></div><h4>' + esc(evTitle(e)) + '</h4>' +
       eventLines(e).map(function (r) { return r[1] === null ? '<div class="kvh">' + esc(r[0]) + '</div>' : '<div class="kv"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('') +
       (fl.length ? '<div class="dthumbs">' + fl.map(function (f, i) { return '<a href="' + f.url + '" class="vw" data-i="' + i + '">' + (f.type.indexOf('image') === 0 ? '<img src="' + f.url + '" alt="">' : esc(f.name.slice(0, 14))) + '</a>'; }).join('') + '</div>' : '') +
-      '<button class="si danger" data-del>' + I('trash', 22) + '<span>Удалить запись</span></button><button class="si cancel">Закрыть</button></div></div>';
+      '<button class="si" data-edit>' + I('edit', 22) + '<span>Редактировать</span></button><button class="si danger" data-del>' + I('trash', 22) + '<span>Удалить запись</span></button><button class="si cancel">Закрыть</button></div></div>';
     var dt = layer.querySelector('.dthumbs'); if (dt) dt._vwl = fl;
     layer.onclick = function (ev) {
       if (ev.target.closest('.vw')) { ev.preventDefault(); return; }
+      if (ev.target.closest('[data-edit]')) { closeLayer(); return go('#/car/' + e.carId + '/event/' + e.id + '/edit'); }
       if (ev.target.closest('[data-del]')) { closeLayer(); confirmDel('Удалить эту запись?', 'Да, удалить', function () { S.delEvent(e.id); toast('Запись удалена'); render(); }); return; }
       if (ev.target.classList.contains('ov') || ev.target.closest('.cancel')) closeLayer();
     };
@@ -995,21 +1005,30 @@
     w.files = filesOf(card.querySelector('[data-att]'));
     return w;
   }
-  function recordForm(id, cat) {
+  function fillField(root, f, v) {
+    var el = root.querySelector('[name="' + f + '"]'); if (!el || v === undefined || v === null || v === '') return;
+    if (el.classList.contains('dt')) el.value = fmtD(v).replace(/\./g, el.dataset.mask || '.');
+    else if (el.tagName === 'SELECT') { if (![].some.call(el.options, function (o) { return o.value === String(v); })) { var op = document.createElement('option'); op.textContent = v; el.appendChild(op); } el.value = v; el.classList.remove('empty'); }
+    else el.value = v;
+  }
+  function recordForm(id, cat, evId) {
     var c = S.car(id); if (!c) return go('#/garage');
+    var EV = evId ? S.db.events.find(function (x) { return x.id === evId; }) : null; if (evId && !EV) return go('#/car/' + id);
+    var fv = function (f) { if (!EV) return undefined; return f.core && f.k === 'date' ? EV.date : f.core && f.k === 'mileage' ? (EV.mileage || '') : (EV.data || {})[f.k]; };
     var k = M.cat(cat), sch = M.SCHEMAS[cat], body = '';
     if (sch.kind === 'works') {
-      body = sch.head.map(function (f) { return fld(f); }).join('') + '<div id="works">' + workCard(cat, 1) + '</div>' +
+      body = sch.head.map(function (f) { return fld(f, fv(f)); }).join('') + '<div id="works">' + workCard(cat, 1) + '</div>' +
         '<section class="card sumcard"><div class="fld" data-k="note"><label class="lbl">Заметка</label><textarea class="inp" name="note" placeholder="Заметка ко всему событию"></textarea></div>' +
         '<div class="fld" data-k="total"><label class="lbl">Общая сумма ₴</label><input class="inp" name="total" inputmode="decimal" data-dec placeholder="0.00" autocomplete="off"></div>' + attBox('Вложения ко всему событию', 'final') + '</section>' +
         '<button type="button" class="btn outline" id="addw" style="margin-top:22px">' + I('plus', 22) + ' ' + sch.addLabel + '</button>';
     } else if (cat === 'mileage') {
       body = '<div class="infobox blue">' + I('info', 30) + '<div><b>Запись пробега</b>Фиксируйте текущий пробег автомобиля для точного отслеживания истории обслуживания и планирования будущих событий.</div></div>' +
-        '<div class="mcard"><small>Текущий пробег</small><b>' + (S.curMileage(id) ? fmtN(S.curMileage(id)) : '—') + ' КМ</b></div>' + sch.fields.map(function (f) { return fld(f); }).join('') + attBox('Вложения ко всему событию');
+        '<div class="mcard"><small>Текущий пробег</small><b>' + (S.curMileage(id) ? fmtN(S.curMileage(id)) : '—') + ' КМ</b></div>' + sch.fields.map(function (f) { return fld(f, fv(f)); }).join('') + attBox('Вложения ко всему событию');
     } else {
-      body = (sch.info ? '<div class="infobox">' + I('info', 28) + '<span>' + esc(sch.info) + '</span></div>' : '') + sch.fields.map(function (f) { return fld(f); }).join('') + (sch.att === false ? '' : attBox('Вложения ко всему событию'));
+      body = (sch.info ? '<div class="infobox">' + I('info', 28) + '<span>' + esc(sch.info) + '</span></div>' : '') + sch.fields.map(function (f) { return fld(f, fv(f)); }).join('') + (sch.att === false ? '' : attBox('Вложения ко всему событию'));
     }
-    page({ title: k.label + ' (' + carName(c) + ')', back: '#/car/' + id, body: '<form id="f" data-cat="' + cat + '" novalidate>' + body + '</form>', footer: '<button class="btn primary" id="save" type="button">Сохранить</button>' });
+    page({ title: (EV ? 'Изменить: ' : '') + k.label + ' (' + carName(c) + ')', back: '#/car/' + id, body: '<form id="f" data-cat="' + cat + '" novalidate>' + body + '</form>', footer: '<button class="btn primary" id="save" type="button">Сохранить</button>' });
+    if (EV) prefillEvent(EV, cat, sch);
     setH({
       click: function (e) {
         if (e.target.closest('#addw')) {
@@ -1017,7 +1036,7 @@
           $('#works').appendChild(d.firstChild); $$('[data-work]')[n - 1].scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
         }
         if (e.target.closest('#tyedit')) return tyreSheet($('#f'));
-        if (e.target.closest('#save')) saveRecord(id, cat);
+        if (e.target.closest('#save')) saveRecord(id, cat, EV);
       },
       change: function (e) {
         var nm = e.target.name, ff = $('#f');
@@ -1034,6 +1053,38 @@
         f.querySelector('[name=tyreName]').value = ''; f.querySelector('[name=tyreCost]').value = ''; f.querySelector('.tyinfo').classList.add('hidden');
       }
     });
+  }
+  function prefillEvent(EV, cat, sch) {
+    var form = $('#f'), d = EV.data || {};
+    if (sch.kind === 'works') {
+      var ws = d.works || [];
+      ws.forEach(function (w, i) {
+        if (i > 0) { var tmp = document.createElement('div'); tmp.innerHTML = workCard(cat, i + 1); $('#works').appendChild(tmp.firstChild); }
+        var card = $$('[data-work]')[i];
+        workFields(cat).forEach(function (f) { fillField(card, f.k, w[f.k]); });
+        fillField(card, 'name', w.name); fillField(card, 'remDate', w.remDate); fillField(card, 'remKm', w.remKm || ''); fillField(card, 'parts', w.parts); fillField(card, 'warranty', w.warranty || '');
+        var box = card.querySelector('[data-att]'); if (box && w.files && w.files.length) { box._f = w.files.slice(); drawThumbs(box); }
+      });
+      fillField(form, 'note', d.note); fillField(form, 'total', d.total);
+      var fb = form.querySelector('.final[data-att]'); if (fb && EV.files && EV.files.length) { fb._f = EV.files.slice(); drawThumbs(fb); }
+      return;
+    }
+    if (cat === 'fuel') {
+      var ft = form.querySelector('[name=fuelType]');
+      if (ft && d.fuelType) {
+        ft.value = d.fuelType; var none = d.fuelType === 'Электро', gl = gradesFor(d.fuelType), inList = gl.indexOf(d.fuelGrade) >= 0;
+        form.querySelector('[data-k=fuelGrade]').classList.toggle('hidden', none);
+        $('#gsel').innerHTML = selectEl('fuelGrade', gl, inList ? d.fuelGrade : (d.fuelGrade ? 'Другое' : ''), 'Выберите марку топлива');
+        var go2 = form.querySelector('[name=gradeOther]'); go2.classList.toggle('hidden', inList || !d.fuelGrade); if (!inList && d.fuelGrade) go2.value = d.fuelGrade;
+      }
+    }
+    var pd = form.querySelector('[name=paid]'); if (pd && d.paid) { pd.checked = true; pd.parentNode.querySelector('b').textContent = 'Оплачено'; }
+    if (cat === 'tire' && d.bought) {
+      var cb = form.querySelector('[name=bought]'); cb.checked = true;
+      form.querySelector('[name=tyreName]').value = d.tyreName || ''; form.querySelector('[name=tyreCost]').value = d.tyreCost || 0;
+      var info = form.querySelector('.tyinfo'); info.firstChild.textContent = (d.tyreName || '') + ' · ' + money(d.tyreCost || 0); info.classList.remove('hidden');
+    }
+    var ab = form.querySelector('[data-att]'); if (ab && EV.files && EV.files.length) { ab._f = EV.files.slice(); drawThumbs(ab); }
   }
   function tyreSheet(f) {
     var nm = f.querySelector('[name=tyreName]'), co = f.querySelector('[name=tyreCost]'), cb = f.querySelector('[name=bought]'), info = f.querySelector('.tyinfo');
@@ -1060,14 +1111,15 @@
       if (e.target.classList.contains('ov') || e.target.closest('.cancel')) { if (!nm.value) cb.checked = false; closeLayer(); }
     };
   }
-  function done(id, ev, rems) {
+  function done(id, ev, rems, isEdit) {
     if (!S.putEvent(ev)) return toast('Не удалось сохранить: закончилось место. Удалите часть вложений');
+    if (isEdit) S.db.reminders.filter(function (r) { return r.eventId === ev.id; }).forEach(function (r) { S.delReminder(r.id); });
     rems.forEach(function (r) { r.id = S.uid(); r.carId = id; r.eventId = ev.id; S.putReminder(r); });
     toast('Сохранено'); go('#/car/' + id);
   }
-  function saveRecord(id, cat) {
+  function saveRecord(id, cat, old) {
     var form = $('#f'), sch = M.SCHEMAS[cat], k = M.cat(cat), rems = [];
-    var ev = { id: S.uid(), carId: id, category: cat, date: '', mileage: 0, data: {}, files: [], createdAt: Date.now() };
+    var ev = { id: old ? old.id : S.uid(), carId: id, category: cat, date: '', mileage: 0, data: {}, files: [], createdAt: old ? old.createdAt : Date.now() };
     if (sch.kind === 'works') {
       var ok = validate(form, sch.head), cards = $$('[data-work]', form);
       var works = cards.map(function (card) {
@@ -1093,7 +1145,7 @@
       var box = form.querySelector('[data-att]'); ev.files = filesOf(box);
       if (cat === 'mileage') {
         var cur = S.curMileage(id);
-        if (ev.data.newMileage < cur) { form.querySelector('[data-k=newMileage]').classList.add('err'); return toast('Новый пробег не может быть меньше текущего (' + fmtN(cur) + ')'); }
+        if (!old && ev.data.newMileage < cur) { form.querySelector('[data-k=newMileage]').classList.add('err'); return toast('Новый пробег не может быть меньше текущего (' + fmtN(cur) + ')'); }
         ev.mileage = ev.data.newMileage;
       }
       if (cat === 'fuel') {
@@ -1111,7 +1163,7 @@
         rems.push({ title: 'Продление страховки', date: ev.data.end, km: 0, base: 0, manual: false, auto: true });
       }
     }
-    done(id, ev, rems);
+    done(id, ev, rems, !!old);
   }
 
   /* ---------- Будущие события ---------- */
@@ -1137,8 +1189,8 @@
     });
     soon.sort(function (a, b) { return a.d.localeCompare(b.d); });
     var soonHtml = soon.length ? '<h2 class="h2" style="margin-top:6px">Напоминание</h2>' + soon.map(function (x) {
-      var r = x.r, dd = r.date ? days(r.date) : null, late = dd !== null && dd < 0, sub;
-      if (r.date) sub = (dd < 0 ? 'просрочено на ' + (-dd) + ' дн.' : dd === 0 ? 'сегодня' : 'через ' + dd + ' дн.');
+      var r = x.r, dd = r.date ? days(r.date) : null, late = (dd !== null && dd < 0) || (r.date && r.km && (r.base || 0) + r.km - S.curMileage(x.c.id) < 0), sub;
+      if (r.date) sub = (dd < 0 ? 'просрочено на ' + (-dd) + ' дн.' : dd === 0 ? 'сегодня' : 'через ' + dd + ' дн.') + (r.km ? ' · ' + kmPart(r, x.c) : '');
       else { var lf = (r.base || 0) + r.km - S.curMileage(x.c.id); sub = lf < 0 ? 'превышено на ' + fmtN(-lf) + ' ' + unit(x.c) : 'до ' + fmtN((r.base || 0) + r.km) + ' ' + unit(x.c); late = lf < 0; }
       var badge = r.date ? '<b>' + r.date.slice(8) + '</b><small>' + M.MONTHS[+r.date.slice(5, 7) - 1] + '</small>' : '<b>' + I('gauge', 22) + '</b><small>км</small>';
       return '<div class="rem dl"><span class="dbadge ' + (late ? 'late' : '') + '">' + badge + '</span><div class="evm"><b>' + esc(r.title) + '</b><small class="' + (late ? 'late' : '') + '">' + esc(carName(x.c) + ' · ' + (r.date ? fmtD(r.date) + ' · ' : '') + sub) + '</small></div></div>';
@@ -1401,6 +1453,7 @@
     [/^#\/login$/, login], [/^#\/welcome$/, welcome], [/^#\/garage$/, garage], [/^#\/car\/new$/, function () { carForm(); }],
     [/^#\/car\/([^/]+)\/edit$/, carForm], [/^#\/car\/([^/]+)\/record$/, recordPick],
     [/^#\/car\/([^/]+)\/record\/([a-z]+)$/, function (id, cat) { if (!M.SCHEMAS[cat]) return go('#/car/' + id + '/record'); recordForm(id, cat); }],
+    [/^#\/car\/([^/]+)\/event\/([^/]+)\/edit$/, function (id, evId) { var ev = S.db.events.find(function (x) { return x.id === evId; }); if (!ev || !M.SCHEMAS[ev.category]) return go('#/car/' + id); recordForm(id, ev.category, evId); }],
     [/^#\/car\/([^/]+)\/history(?:\/([a-z]+))?$/, history], [/^#\/car\/([^/]+)\/plan$/, planForm],
     [/^#\/car\/([^/]+)$/, about], [/^#\/upcoming$/, upcoming], [/^#\/services$/, function () { go('#/analytics'); }],
     [/^#\/analytics$/, analytics], [/^#\/profile$/, profile]

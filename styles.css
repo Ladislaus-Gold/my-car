@@ -364,3 +364,5 @@ body{overflow-x:clip;overflow-y:visible}
 /* iPhone: настоящий date-input поверх иконки календаря — открывается нативным касанием */
 .datew .cal{pointer-events:none}
 .datew .native{pointer-events:auto;z-index:2;position:absolute;right:0;top:0;width:64px;height:100%;opacity:.01;font-size:16px;-webkit-appearance:none;appearance:none;background:transparent}
+.page:has(.tabbar) .body{padding-bottom:calc(124px + env(safe-area-inset-bottom))}.page:has(.foot) .body{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+.req{cursor:pointer;display:inline-block;padding:6px 10px;margin:-6px -4px;font-style:normal;color:#dc2626;-webkit-tap-highlight-color:transparent}
