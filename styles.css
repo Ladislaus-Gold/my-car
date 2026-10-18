@@ -433,3 +433,11 @@ body{overflow-x:clip;overflow-y:visible}
 .chart path,.chart polyline{stroke-linejoin:round;stroke-linecap:round}
 .chart line{stroke-dasharray:3 4}
 .bars,.track{border-radius:99px}.bars i,.track i{border-radius:99px}
+.stat.wide b{color:#fff!important}.stat.wide b[style]{font-size:15px!important;font-weight:600;opacity:.92;white-space:normal}
+
+/* спокойная акцентная плашка вместо ярко-зелёной (2.0.26) */
+.stat.wide{background:var(--tint);border:1px solid var(--line);box-shadow:none}
+.stat.wide small{color:var(--mut)}
+.stat.wide b,.stat.wide b[style]{color:var(--pd)!important}
+.stat.wide b[style]{opacity:1;color:var(--mut)!important}
+html[data-theme=dark] .stat.wide b{color:var(--p)!important}
