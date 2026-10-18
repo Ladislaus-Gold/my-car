@@ -21,4 +21,4 @@
 Поки `firebase-config.js` містить `null`, застосунок працює локально: екран входу пропонує «Продовжити без входу».
 
 ## Файли
-index.html · styles.css · app.js (UI і дані) · cloud.js (Firebase) · firebase-config.js · manifest.webmanifest · icon.svg · firestore.rules
+index.html · styles.css · app.js (UI і дані) · cloud.js (Firebase) · firebase-config.js · manifest.webmanifest · icon-192.png · icon-512.png · apple-touch-icon.png · logo.png · i18n.js (мови) · report.js (звіт PDF/Excel) · sw.js · version.json · firestore.rules

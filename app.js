@@ -220,7 +220,7 @@
       { k: 'cost', t: 'money', l: 'Стоимость ₴', req: 1 },
       { k: 'fuelType', t: 'select', l: 'Тип топлива', req: 1, ph: 'Выберите тип топлива', opts: OPTS.fuel },
       { k: 'fuelGrade', t: 'grade', l: 'Марка топлива' },
-      { k: 'station', t: 'text', l: 'АЗС', ph: 'Названиение АЗС' }] },
+      { k: 'station', t: 'text', l: 'АЗС', ph: 'Название АЗС' }] },
     tire: { fields: [DATE, MILE,
       { k: 'tyType', t: 'select', l: 'Вид работ', req: 1, ph: 'Выберите вид работ', opts: OPTS.tire },
       { k: 'amount', t: 'money', l: 'Стоимость шиномонтажа ₴' },
@@ -232,7 +232,7 @@
       { k: 'kwh', t: 'money', l: 'кВт·ч', req: 1, ph: 'напр. 30' },
       { k: 'ppl', t: 'money', l: 'Цена за кВт·ч ₴' },
       { k: 'cost', t: 'money', l: 'Стоимость ₴', req: 1 },
-      { k: 'station', t: 'text', l: 'Станция', ph: 'Названиение станции' }] },
+      { k: 'station', t: 'text', l: 'Станция', ph: 'Название станции' }] },
     wash: { fields: [DATE, MILE,
       { k: 'amount', t: 'money', l: 'Сумма ₴', req: 1 },
       { k: 'washType', t: 'select', l: 'Тип мойки', req: 1, ph: 'Выберите тип мойки', opts: OPTS.wash },
@@ -266,7 +266,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '1.0.13';
+  var VERSION = '2.0.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -392,6 +392,23 @@
         out.push({ late: false, when: days(d.discountUntil), title: 'Скидка на штраф до ' + fmtD(d.discountUntil), sub: carName(c) + ' · ' + money(d.amount) });
     });
     return out.sort(function (a, b) { return a.when - b.when; });
+  }
+  /* ---------- Тема и язык ---------- */
+  var pref = function (k, d) { try { return localStorage.getItem('mycar.' + k) || d; } catch (e) { return d; } };
+  var setPref = function (k, v) { try { localStorage.setItem('mycar.' + k, v); } catch (e) {} };
+  function applyTheme() {
+    var t = pref('theme', 'auto'), dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    var m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', dark ? '#0d1612' : '#edf7f2');
+  }
+  try { if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
+  function setupHtml() {
+    var th = pref('theme', 'auto'), lg = pref('lang', 'ru');
+    var o1 = [['light', '☀️', 'Светлая'], ['dark', '🌙', 'Тёмная'], ['auto', '📱', 'Системная']], o2 = [['en', '🇬🇧', 'English'], ['ru', '🇷🇺', 'Русский'], ['uk', '🇺🇦', 'Українська']];
+    return '<h2 class="h2" style="font-size:21px;margin:24px 0 8px">Оформление</h2><div class="card"><div class="stl">Тема</div><div class="opt">' +
+      o1.map(function (o) { return '<button data-theme="' + o[0] + '" class="' + (th === o[0] ? 'on' : '') + '"><i>' + o[1] + '</i>' + o[2] + '</button>'; }).join('') +
+      '</div><p class="hint" style="margin-top:8px">«Системная» подстраивается под настройку iPhone или Android</p></div>' +
+      '<div class="card" style="margin-top:12px"><div class="stl">Язык</div><div class="opt">' + o2.map(function (o) { return '<button data-lang="' + o[0] + '" class="' + (lg === o[0] ? 'on' : '') + '"><i>' + o[1] + '</i>' + o[2] + '</button>'; }).join('') + '</div></div>';
   }
   function tabbar(a) {
     var T = [['garage', 'Гараж', 'carfront'], ['upcoming', 'Будущие события', 'calcheck'], ['analytics', 'Аналитика', 'chart'], ['profile', 'Профиль', 'user']];
@@ -600,17 +617,100 @@
   var EMO = { repair: '🔧', to: '⚙️', diag: '🔍', mileage: '🧭', insurance: '🛡️', fuel: '⛽', wash: '🚿', tire: '🛞', charge: '🔋', fine: '🚨', other: '📌' };
   var PKC = { repair: '#ef4444', to: '#3b82f6', diag: '#a855f7', mileage: '#6b7280', insurance: '#f59e0b', fuel: '#22c55e', wash: '#06b6d4', tire: '#f97316', charge: '#16a34a', fine: '#e11d48', other: '#6b7280' };
   var catI = function (k, sz) { return '<span class="emo" style="font-size:' + (sz || 22) + 'px">' + (EMO[k.id] || '📌') + '</span>'; };
-  var EMB = ['#7c4df0', '#0ea5e9', '#ef4444', '#16a34a', '#f59e0b', '#0f172a', '#db2777', '#0d9488'];
+  var EMB = ['#0e9f6e', '#0ea5e9', '#ef4444', '#16a34a', '#f59e0b', '#0f172a', '#db2777', '#0d9488'];
   function emblem(c) {
     var b = String(c.brand || '?'), h = 0; for (var i = 0; i < b.length; i++) h = (h * 31 + b.charCodeAt(i)) % 997;
     return '<span class="emb" style="--ec:' + EMB[h % EMB.length] + '"><i>' + esc(b.charAt(0).toUpperCase()) + '</i></span>';
   }
-  function carHero(c) {
+
+  /* ---------- Расходы за период (неделя / месяц / год / всё) ---------- */
+  var PERS = [['week', 'Неделя'], ['month', 'Месяц'], ['year', 'Год'], ['all', 'Всё']];
+  var PERN = { week: 'за неделю', month: 'за месяц', year: 'за год', all: 'за всё время' };
+  var PERD = { week: 7, month: 30, year: 365 };
+  var gper = function () { var p = pref('gp', 'year'); return PERD[p] || p === 'all' ? p : 'year'; };
+  function dayStr(n) { var d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function spendIn(ids, per) {
+    var t = today(), n = PERD[per], from = n ? dayStr(n) : '', pf = n ? dayStr(n * 2) : '', r = { sum: 0, prev: 0, n: 0, cats: {}, from: from };
+    S.db.events.forEach(function (e) {
+      if (ids.indexOf(e.carId) < 0 || !e.date || e.category === 'mileage') return;
+      var c = S.costOf(e);
+      if (e.date <= t && (!from || e.date >= from)) { r.sum += c; r.n++; r.cats[e.category] = (r.cats[e.category] || 0) + c; }
+      else if (n && e.date >= pf && e.date < from) r.prev += c;
+    });
+    r.delta = n && r.prev > 0 ? Math.round((r.sum - r.prev) / r.prev * 100) : null;
+    return r;
+  }
+  function distIn(ids, from) {
+    var t = today(), v = [];
+    S.db.events.forEach(function (e) { if (ids.indexOf(e.carId) >= 0 && e.mileage > 0 && e.date && e.date <= t && (!from || e.date >= from)) v.push(+e.mileage); });
+    return v.length > 1 ? Math.max.apply(null, v) - Math.min.apply(null, v) : 0;
+  }
+  function fuelAvg(id) {
+    var fe = S.events(id).filter(function (e) { return e.category === 'fuel' && +(e.data || {}).liters > 0 && e.mileage > 0; }).sort(function (a, b) { return a.mileage - b.mileage; });
+    if (fe.length < 2) return null;
+    var d = fe[fe.length - 1].mileage - fe[0].mileage, l = 0; fe.slice(1).forEach(function (e) { l += +e.data.liters; });
+    return d > 0 ? l / d * 100 : null;
+  }
+  var CCOL = { repair: '#ef4444', to: '#3b82f6', diag: '#a855f7', insurance: '#f59e0b', fuel: '#22c55e', charge: '#14b8a6', wash: '#06b6d4', tire: '#f97316', fine: '#be123c', other: '#9ca3af' };
+  function perSeg(per, cls) {
+    return '<div class="mini ' + (cls || '') + '" data-gps>' + PERS.map(function (p) { return '<button data-gp="' + p[0] + '" class="' + (per === p[0] ? 'on' : '') + '">' + p[1] + '</button>'; }).join('') + '</div>';
+  }
+  function catBar(r) {
+    var ks = M.CATS.filter(function (k) { return r.cats[k.id] > 0; }).sort(function (a, b) { return r.cats[b.id] - r.cats[a.id]; });
+    if (!ks.length || !r.sum) return '';
+    return '<div class="bars">' + ks.map(function (k) { return '<i style="width:' + (r.cats[k.id] / r.sum * 100) + '%;background:' + CCOL[k.id] + '"></i>'; }).join('') + '</div><div class="lgx">' +
+      ks.slice(0, 5).map(function (k) { return '<span><i style="background:' + CCOL[k.id] + '"></i>' + catI(k, 14) + ' ' + Math.round(r.cats[k.id] / r.sum * 100) + '%</span>'; }).join('') + '</div>';
+  }
+  function deltaHtml(r) {
+    if (r.delta === null) return '';
+    return '<em class="' + (r.delta > 0 ? 'up' : 'dn') + '">' + (r.delta > 0 ? '▲ ' : r.delta < 0 ? '▼ ' : '') + Math.abs(r.delta) + '%</em>';
+  }
+  function nextRem(id) {
+    var best = null;
+    S.db.reminders.forEach(function (r) {
+      if (r.carId !== id) return;
+      var w = null, txt = '';
+      if (r.date) { var d = days(r.date); w = d; txt = d < 0 ? 'просрочено на ' + (-d) + ' дн.' : d === 0 ? 'сегодня' : 'через ' + d + ' дн.'; }
+      else if (r.km) { var left = (r.base || 0) + r.km - S.curMileage(id); w = left / 100; txt = left < 0 ? 'превышено на ' + fmtN(-left) + ' км' : 'осталось ' + fmtN(left) + ' км'; }
+      if (w !== null && (!best || w < best.w)) best = { w: w, title: r.title, txt: txt, late: w < 0 };
+    });
+    return best;
+  }
+  function carBig(c) {
+    var per = gper(), r = spendIn([c.id], per), evs = S.events(c.id), photo = c.photos && c.photos[0];
+    var dist = distIn([c.id], r.from), fa = fuelAvg(c.id), nr = nextRem(c.id);
+    var lastTo = evs.filter(function (e) { return e.category === 'to'; }).sort(function (a, b) { return b.date.localeCompare(a.date); })[0];
+    var ins = evs.filter(function (e) { return e.category === 'insurance' && (e.data || {}).end; }).sort(function (a, b) { return b.data.end.localeCompare(a.data.end); })[0];
+    var cell = function (ic, l, v, bad) { return '<div class="cell' + (bad ? ' bad' : '') + '"><small>' + ic + ' ' + l + '</small><b>' + v + '</b></div>'; };
+    var sub = [c.alias, c.plate, c.body, c.color].filter(Boolean).join(' · ');
+    var eg = [c.engine ? c.engine + ' л' : '', c.gear].filter(Boolean).join(' · ');
+    return '<article class="car big" data-id="' + c.id + '"><div class="bph' + (photo ? ' hasp' : '') + '">' + (photo ? '<img src="' + photo + '" alt="">' : '<span class="hdeco">' + I('carfront', 190) + '</span>') +
+      '<div class="btop">' + emblem(c) + '<span class="hyr">' + esc(c.year) + '</span>' + (c.fuel ? '<span class="hyr">⛽ ' + esc(c.fuel) + '</span>' : '') + '<button class="kebab" data-menu="' + c.id + '" aria-label="Меню">' + I('more', 22) + '</button></div>' +
+      '<div class="bnm"><h3>' + esc(carName(c)) + '</h3><p>' + esc(sub || 'Ваш автомобиль') + '</p></div></div>' +
+      '<div class="bbd"><div class="sp"><div><small>Расходы ' + PERN[per] + '</small><b>' + money(r.sum).replace('.00', '') + '</b></div>' + deltaHtml(r) + '</div>' + perSeg(per) + catBar(r) +
+      '<div class="grid">' + cell('🧭', 'Пробег', fmtN(S.curMileage(c.id)) + ' ' + unit(c)) + cell('⛽', 'Средний расход', fa ? fa.toFixed(1).replace('.', ',') + ' л/100 км' : '—') +
+      cell('⚙️', 'Двигатель · КПП', esc(eg) || '—') + cell('💰', 'Стоимость 1 км', dist > 0 && r.sum ? money(r.sum / dist) : '—') +
+      cell('🛠️', 'Последнее ТО', lastTo ? fmtD(lastTo.date) : '—') + cell('📅', nr ? esc(nr.title.length > 18 ? nr.title.slice(0, 17) + '…' : nr.title) : 'Следующее', nr ? nr.txt : '—', nr && nr.late) +
+      cell('🛡️', 'Страховка до', ins ? fmtD(ins.data.end) : '—', ins && ins.data.end < today()) + cell('🧾', 'Записей', evs.length) + '</div>' +
+      '<button class="rep" data-rep="' + c.id + '">📊 Отчёт по авто</button></div></article>';
+  }
+  function carRow2(c, per) {
+    var r = spendIn([c.id], per), photo = c.photos && c.photos[0], tags = [c.body, c.fuel, c.gear].filter(Boolean);
+    return '<article class="car row2" data-id="' + c.id + '"><div class="rph"' + (photo ? '' : ' style="--a:' + EMB[(c.brand || '?').charCodeAt(0) % EMB.length] + '"') + '>' + (photo ? '<img src="' + photo + '" alt="">' : I('carfront', 46)) + '<span class="remb">' + esc((c.brand || '?').charAt(0).toUpperCase()) + '</span></div>' +
+      '<div class="rin"><div class="rt"><h3>' + esc(carName(c)) + '</h3><button class="kebab k2" data-menu="' + c.id + '" aria-label="Меню">' + I('more', 20) + '</button></div><p>' + esc([c.plate, c.year].filter(Boolean).join(' · ')) + '</p>' +
+      (tags.length ? '<div class="rtg">' + tags.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' : '') +
+      '<div class="rst"><div><small>Пробег</small><b>' + fmtN(S.curMileage(c.id)) + ' ' + unit(c) + '</b></div><div><small>Расходы ' + PERN[per] + '</small><b>' + fmtN(r.sum) + ' ₴</b></div></div></div></article>';
+  }
+  function sumCard(cars, per) {
+    var r = spendIn(cars.map(function (c) { return c.id; }), per);
+    return '<div class="sumc"><small>Расходы по всем авто · ' + PERN[per] + '</small><div class="srw"><b>' + money(r.sum).replace('.00', '') + '</b>' + deltaHtml(r) + '</div>' + perSeg(per, 'inv') + catBar(r) + '</div>';
+  }
+  function carHero(c, noMenu) {
     var yr = new Date(); yr.setDate(yr.getDate() - 365); var from = yr.getFullYear() + '-' + pad(yr.getMonth() + 1) + '-' + pad(yr.getDate()), spent = 0, evs = S.events(c.id);
     evs.forEach(function (e) { if (e.date >= from) spent += S.costOf(e); });
     var photo = c.photos && c.photos[0], tags = [c.body, c.fuel, c.gear, c.engine ? c.engine + ' л' : '', c.color].filter(Boolean);
     return '<article class="car hero' + (photo ? ' hasp' : '') + '" data-id="' + c.id + '"><div class="hbg">' + (photo ? '<img src="' + photo + '" alt="">' : '<span class="hdeco">' + I('carfront', 190) + '</span>') + '</div>' +
-      '<div class="htop">' + emblem(c) + '<span class="hyr">' + esc(c.year) + '</span><button class="kebab" data-menu="' + c.id + '" aria-label="Меню">' + I('more', 22) + '</button></div>' +
+      '<div class="htop">' + emblem(c) + '<span class="hyr">' + esc(c.year) + '</span>' + (noMenu ? '' : '<button class="kebab" data-menu="' + c.id + '" aria-label="Меню">' + I('more', 22) + '</button>') + '</div>' +
       '<div class="hbody"><h3>' + esc(carName(c)) + '</h3><p>' + esc([c.alias, c.plate].filter(Boolean).join(' · ') || 'Ваш автомобиль') + '</p>' + (tags.length ? '<div class="htags">' + tags.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' : '') + '</div>' +
       '<div class="hstats"><div><small>Пробег</small><b>' + fmtN(S.curMileage(c.id)) + ' ' + unit(c) + '</b></div><div><small>Расходы за год</small><b>' + fmtN(spent) + ' ₴</b></div><div><small>Записей</small><b>' + evs.length + '</b></div></div></article>';
   }
@@ -705,7 +805,7 @@
       var arch = ui.tab === 'arch', q = ui.q.trim().toLowerCase();
       var cars = S.cars(arch).filter(function (c) { return !q || (carName(c) + ' ' + (c.alias || '') + ' ' + (c.plate || '')).toLowerCase().indexOf(q) >= 0; });
       $('#cars').className = 'cars ' + (ui.compact ? 'compact' : '');
-      $('#cars').innerHTML = cars.length ? cars.map(function (c) { return ui.compact ? carCard(c, true) : (cars.length === 1 && !arch && !q ? carHero(c) : carRow(c)); }).join('') :
+      $('#cars').innerHTML = cars.length ? (cars.length > 1 && !arch && !ui.compact ? sumCard(cars, gper()) : '') + cars.map(function (c) { return ui.compact ? carCard(c, true) : (arch || q ? carRow(c) : cars.length === 1 ? carBig(c) : carRow2(c, gper())); }).join('') :
         '<p class="empty">' + (arch ? 'Архив пуст' : q ? 'Ничего не найдено' : 'В гараже пока нет авто.<br>Нажмите «+ Добавить авто»') + '</p>';
     };
     draw();
@@ -714,6 +814,9 @@
         var t = e.target, b;
         if ((b = t.closest('[data-tab]'))) { if (b.dataset.tab === 'add') return go('#/car/new'); ui.tab = b.dataset.tab; garage(); return; }
         if (t.closest('#view')) { ui.compact = !ui.compact; draw(); return; }
+        if ((b = t.closest('[data-gp]'))) { e.stopPropagation(); setPref('gp', b.dataset.gp); draw(); return; }
+        if ((b = t.closest('[data-rep]'))) { e.stopPropagation(); return reportSheet(b.dataset.rep); }
+        if (t.closest('[data-gps]')) return;
         if (t.closest('#add')) return addRecordMenu();
         if ((b = t.closest('[data-menu]'))) { e.stopPropagation(); carActions(S.car(b.dataset.menu)); return; }
         if ((b = t.closest('.car'))) go('#/car/' + b.dataset.id);
@@ -745,7 +848,7 @@
     var evs = S.events(id);
     page({
       title: 'Об авто', back: '#/garage', nav: 'garage', right: '<button class="link" id="acts">Действия с авто</button>',
-      body: carCard(c, false) + '<a class="btn primary" style="margin-top:22px;height:62px" href="#/car/' + id + '/record">' + I('plus', 26) + ' Добавить запись</a>' +
+      body: carHero(c, true).replace('class="car hero', 'class="car hero static') + '<a class="btn primary" style="margin-top:22px;height:62px" href="#/car/' + id + '/record">' + I('plus', 26) + ' Добавить запись</a>' +
         '<h2 class="h2">Категории событий</h2><div class="chips">' + M.CATS.map(function (k) { return '<a class="chip ' + k.cls + '" href="#/car/' + id + '/history/' + k.id + '">' + catI(k, 22) + '<span>' + k.label + '</span></a>'; }).join('') + '</div>' +
         '<div class="rowh"><h2 class="h2">История событий</h2><a class="link" href="#/car/' + id + '/history">Смотреть все</a></div>' +
         (evs.length ? evs.slice(0, 5).map(evRow).join('') : '<p class="empty">Событий пока нет</p>') + totalBar(evs, 'за всё время')
@@ -869,7 +972,7 @@
       h += '<div class="fld" data-k="remDate"><label class="lbl">Напоминание</label>' + dateInp('remDate', '', true) + '</div><div class="fld kmw" data-k="remKm">' + I('gauge', 26) + '<input class="inp" name="remKm" inputmode="numeric" data-num placeholder="Через N км" autocomplete="off"></div><p class="hint">Напоминание попадёт в \'Будущие события\'</p>';
     }
     h += attBox('Вложения ко всему событию');
-    if (!diag) h += '<button type="button" class="exp">Расширенная информация ' + I('down', 22) + '</button><div class="expbody hidden">' + fld({ k: 'parts', t: 'text', l: 'Запчасти / материалы', ph: 'Названиение, артикул' }) + fld({ k: 'warranty', t: 'num', l: 'Гарантия (мес.)', ph: 'напр. 12' }) + '</div>';
+    if (!diag) h += '<button type="button" class="exp">Расширенная информация ' + I('down', 22) + '</button><div class="expbody hidden">' + fld({ k: 'parts', t: 'text', l: 'Запчасти / материалы', ph: 'Название, артикул' }) + fld({ k: 'warranty', t: 'num', l: 'Гарантия (мес.)', ph: 'напр. 12' }) + '</div>';
     return h + '</section>';
   }
   function readWork(card, cat) {
@@ -1138,7 +1241,7 @@
       var mn = Math.min.apply(null, pts.map(function (p) { return p.m; })), mx = Math.max.apply(null, pts.map(function (p) { return p.m; })), t0 = new Date(pts[0].d).getTime(), t1 = new Date(pts[pts.length - 1].d).getTime() || 1, W2 = 340, H2 = 140, pl = 10, pr = 10, pt = 14, pb = 26;
       var px = function (p) { return pl + (t1 === t0 ? 0 : (new Date(p.d).getTime() - t0) / (t1 - t0)) * (W2 - pl - pr); }, py = function (p) { return pt + (H2 - pt - pb) * (1 - (mx === mn ? 0.5 : (p.m - mn) / (mx - mn))); };
       var pathD = pts.map(function (p, i) { return (i ? 'L' : 'M') + px(p).toFixed(1) + ' ' + py(p).toFixed(1); }).join(' ');
-      mileChart = '<svg class="chart" viewBox="0 0 ' + W2 + ' ' + H2 + '"><path d="' + pathD + ' L' + px(pts[pts.length - 1]).toFixed(1) + ' ' + (H2 - pb) + ' L' + px(pts[0]).toFixed(1) + ' ' + (H2 - pb) + 'Z" fill="#8b5cf6" opacity=".12"/><path d="' + pathD + '" fill="none" stroke="#8b5cf6" stroke-width="3" stroke-linejoin="round"/>' + pts.map(function (p) { return '<circle cx="' + px(p).toFixed(1) + '" cy="' + py(p).toFixed(1) + '" r="3.5" fill="#8b5cf6"/>'; }).join('') +
+      mileChart = '<svg class="chart" viewBox="0 0 ' + W2 + ' ' + H2 + '"><path d="' + pathD + ' L' + px(pts[pts.length - 1]).toFixed(1) + ' ' + (H2 - pb) + ' L' + px(pts[0]).toFixed(1) + ' ' + (H2 - pb) + 'Z" fill="#0e9f6e" opacity=".12"/><path d="' + pathD + '" fill="none" stroke="#0e9f6e" stroke-width="3" stroke-linejoin="round"/>' + pts.map(function (p) { return '<circle cx="' + px(p).toFixed(1) + '" cy="' + py(p).toFixed(1) + '" r="3.5" fill="#0e9f6e"/>'; }).join('') +
         '<text x="' + pl + '" y="' + (H2 - 6) + '">' + fmtD(pts[0].d) + ' · ' + fmtN(pts[0].m) + '</text><text x="' + (W2 - pr) + '" y="' + (H2 - 6) + '" text-anchor="end">' + fmtD(pts[pts.length - 1].d) + ' · ' + fmtN(pts[pts.length - 1].m) + '</text></svg>';
     }
     var top = evs.filter(function (e) { return S.costOf(e) > 0; }).sort(function (a, b) { return S.costOf(b) - S.costOf(a); }).slice(0, 5);
@@ -1171,6 +1274,7 @@
       title: 'Профиль', left: true, nav: 'profile',
       body: '<button class="ava" id="ava" aria-label="Сменить фото профиля">' + (pic ? '<img src="' + esc(pic) + '" alt="" referrerpolicy="no-referrer">' : I('user', 46)) + '<span class="avac">' + I('edit', 16) + '</span></button><input type="file" id="avaf" hidden accept="image/*"><div class="pc"><b>' + esc(user ? (user.displayName || user.email || 'Пользователь') : 'Гость') + '</b><small>' + (user ? esc(user.email || '') : (cl && cl.ready ? 'Войдите, чтобы хранить данные в облаке' : 'Данные хранятся на этом устройстве')) + '</small></div>' +
         (cl && cl.ready ? (user ? '<button class="svc" id="out"><span class="evi">' + I('x', 22) + '</span><div><b>Выйти</b><small>Данные останутся в облаке</small></div></button>' : '<button class="btn primary" id="in" style="margin:18px 0 8px">Войти через Google</button>') : '') +
+        setupHtml() + '<button class="svc" id="rep" style="margin-top:12px"><span class="evi">' + I('chart', 22) + '</span><div><b>Отчёт по авто</b><small>Скачать в PDF или Excel</small></div></button>' +
         '<h2 class="h2" style="font-size:21px;margin:24px 0 8px">Подключения</h2><div class="card" id="stbox">' + statusHtml() + '</div>' +
         '<button class="svc' + (hasNew() ? ' hot' : '') + '" data-upd><span class="evi">' + I('refresh', 22) + '</span><div><b>Обновить до текущей версии</b><small id="updsub">' + (hasNew() ? 'Доступна новая версия v' + esc(ui.latest) : 'У вас последняя версия v' + VERSION + ' (нажмите, чтобы перезагрузить)') + '</small></div></button>' +
         '<button class="svc" id="exp"><span class="evi">' + I('download', 22) + '</span><div><b>Резервная копия</b><small>Сохранить данные в файл JSON</small></div></button>' +
@@ -1180,6 +1284,9 @@
     setH({
       click: function (e) {
         var t = e.target;
+        var tb = t.closest('button[data-theme]'); if (tb) { setPref('theme', tb.dataset.theme); applyTheme(); return profile(); }
+        var lb = t.closest('[data-lang]'); if (lb) { setPref('lang', lb.dataset.lang); if (window.I18N) I18N.set(lb.dataset.lang); return profile(); }
+        if (t.closest('#rep')) return reportSheet();
         if (t.closest('#ava')) return $('#avaf').click();
         if (t.closest('#in')) return cl.signIn().catch(function (er) { toast('Не удалось войти: ' + (er.code || er.message)); });
         if (t.closest('#out')) { try { localStorage.removeItem('mycar.guest'); localStorage.removeItem('mycar.avatar'); } catch (er) {} return cl.signOut(); }
@@ -1219,11 +1326,11 @@
     if (h === '#/welcome' && S.db.cars.length && !ui.obBusy) return '#/garage';
     return '';
   }
-  function splash() { app.innerHTML = '<div class="lg"><img src="icon.svg" alt="My CAR"><p class="wsub">Загрузка…</p></div>'; app.onclick = app.oninput = app.onchange = null; }
+  function splash() { app.innerHTML = '<div class="lg"><img src="logo.png" alt="My CAR"><p class="wsub">Загрузка…</p></div>'; app.onclick = app.oninput = app.onchange = null; }
   var GLOGO = '<svg viewBox="0 0 48 48" width="26" height="26" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
   function login() {
     var C = window.Cloud || {};
-    app.innerHTML = '<div class="lg"><img src="icon.svg" alt="My CAR"><h1>My CAR</h1><p class="wsub">Учёт обслуживания, ремонтов, топлива, страховок и штрафов вашего авто — в одном месте</p>' +
+    app.innerHTML = '<div class="lg"><img src="logo.png" alt="My CAR" class="biglogo"><p class="wsub">Учёт обслуживания, ремонтов, топлива, страховок и штрафов вашего авто — в одном месте</p>' +
       '<button class="gbtn" id="gin">' + GLOGO + '<span>Войти через Gmail</span></button>' +
       '<p class="hint" style="max-width:320px;text-align:center">Регистрация происходит автоматически при первом входе с вашим аккаунтом Google</p>' +
       (C.ready ? '' : '<button class="link" id="guest" style="font-size:17px;margin-top:6px">Продолжить без входа</button>') + '<p class="hint">Версия ' + VERSION + '</p></div>';
@@ -1286,6 +1393,8 @@
     [/^#\/car\/([^/]+)$/, about], [/^#\/upcoming$/, upcoming], [/^#\/services$/, function () { go('#/analytics'); }],
     [/^#\/analytics$/, analytics], [/^#\/profile$/, profile]
   ];
+  function reportSheet(id) { if (window.MCREP) MCREP.open(id); else toast('Отчёт загружается, попробуйте ещё раз'); }
+  window.MCAPP = { S: S, M: M, money: money, fmtD: fmtD, fmtN: fmtN, today: today, days: days, esc: esc, carName: carName, unit: unit, EMO: EMO, CCOL: CCOL, evTitle: evTitle, eventLines: eventLines, allFiles: allFiles, toast: toast, closeLayer: closeLayer, layer: layer, pad: pad, VERSION: VERSION, spendIn: spendIn, fuelAvg: fuelAvg };
   function render() {
     closeLayer();
     var h = location.hash || '#/garage';

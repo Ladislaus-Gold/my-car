@@ -1,6 +1,15 @@
-# My CAR — Summary (v1.0.13)
+# My CAR — Summary (v2.0.0)
 
 Мобильное веб-приложение учёта обслуживания авто. GitHub Pages: https://ladislaus-gold.github.io/my-car/ · Firebase: проект my-car-dfb42 (Google-вход, Firestore).
+
+## Версия 2.0.0 (2026-10-18) — большое обновление
+- Изумрудный дизайн, новый логотип/иконка; тема светлая / тёмная / авто (профиль)
+- Языки: English / Русский / Українська (профиль; i18n.js — перевод на лету по словарю)
+- Отчёт по авто в PDF и Excel (report.js; jsPDF, html2canvas, ExcelJS подгружаются из CDN; графики в Excel — встроенные картинки)
+- Гараж: расширенная карточка при одном авто, сводка + список при 2–3 авто, период расходов неделя/месяц/год/всё; «Добавить запись» убрана, осталась «+»
+
+## Версия 1.0.14 (2026-10-18)
+- «Об авто»: карточка в стиле гаража
 
 ## Версия 1.0.13 (2026-10-18)
 - Компактное нижнее меню (как в примере Health); фото открываются внутри приложения (просмотрщик)
@@ -28,7 +37,7 @@
 - Марка топлива, выбор даты (по умолчанию сегодня), статусы подключения, кнопка обновления
 
 ## Структура (плоская, без папок)
-index.html, styles.css, app.js, cloud.js, firebase-config.js, manifest.webmanifest, icon.svg, firestore.rules, version.json, sw.js, README.md, CHANGELOG.md
+index.html, styles.css, app.js, cloud.js, firebase-config.js, manifest.webmanifest, icon-192.png, icon-512.png, apple-touch-icon.png, logo.png, i18n.js, report.js, firestore.rules, version.json, sw.js, README.md, CHANGELOG.md
 
 ## Правила работы
 - Каждая версия — новый номер (виден в Профиле внизу)
