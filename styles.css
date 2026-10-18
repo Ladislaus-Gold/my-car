@@ -366,3 +366,6 @@ body{overflow-x:clip;overflow-y:visible}
 .datew .native{pointer-events:auto;z-index:2;position:absolute;right:0;top:0;width:64px;height:100%;opacity:.01;font-size:16px;-webkit-appearance:none;appearance:none;background:transparent}
 .page:has(.tabbar) .body{padding-bottom:calc(124px + env(safe-area-inset-bottom))}.page:has(.foot) .body{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
 .req{cursor:pointer;display:inline-block;padding:6px 10px;margin:-6px -4px;font-style:normal;color:#dc2626;-webkit-tap-highlight-color:transparent}
+.rem[data-rmd]{cursor:pointer}.rem.dl{-webkit-tap-highlight-color:transparent}.rem.dl:active{transform:scale(.99)}
+.cell[data-gcat],.cell[data-gup]{cursor:pointer}.cell.sel{background:var(--p);color:#fff;box-shadow:0 4px 14px rgba(var(--sh),.25)}.cell.sel small,.cell.sel b{color:#fff}
+.upc{cursor:default;-webkit-tap-highlight-color:transparent;user-select:none}
