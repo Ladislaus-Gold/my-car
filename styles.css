@@ -353,3 +353,14 @@ body{overflow-x:clip;overflow-y:visible}
 .rst{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:8px}.rst small{display:block;color:var(--mut);font-size:12px}.rst b{font-size:15px;white-space:nowrap}
 .rph{align-self:stretch;min-height:128px}.car.row2{align-items:stretch}
 .lg img.biglogo{width:240px;height:240px;border-radius:44px;margin-bottom:10px}
+/* v2.0: карточка авто на «Будущие события» — как в гараже */
+.upcar{background:none;padding:0;gap:6px}
+.upcar>.car{flex:1;min-width:0;margin:0}
+.upcar>button{width:30px;flex:none}
+
+.hero+.mini{margin:14px 0 0}
+.sumc .rng label{color:rgba(255,255,255,.85)}.sumc .rng .inp{height:46px;font-size:15px}.gpr{margin:0 0 12px}.gpr .inp{height:46px;font-size:15px}.hero+.mini+.gpr{margin-top:-4px}
+.sumc .rng .inp{color:#0f1f19;background:#fff}html[data-theme=dark] .sumc .rng .inp{color:#0f1f19}
+/* iPhone: настоящий date-input поверх иконки календаря — открывается нативным касанием */
+.datew .cal{pointer-events:none}
+.datew .native{pointer-events:auto;z-index:2;position:absolute;right:0;top:0;width:64px;height:100%;opacity:.01;font-size:16px;-webkit-appearance:none;appearance:none;background:transparent}
