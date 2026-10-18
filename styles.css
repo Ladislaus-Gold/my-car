@@ -369,3 +369,24 @@ body{overflow-x:clip;overflow-y:visible}
 .rem[data-rmd]{cursor:pointer}.rem.dl{-webkit-tap-highlight-color:transparent}.rem.dl:active{transform:scale(.99)}
 .cell[data-gcat],.cell[data-gup]{cursor:pointer}.cell.sel{background:var(--p);color:#fff;box-shadow:0 4px 14px rgba(var(--sh),.25)}.cell.sel small,.cell.sel b{color:#fff}
 .upc{cursor:default;-webkit-tap-highlight-color:transparent;user-select:none}
+/* калькулятор сумм */
+.moneyw{position:relative}.moneyw .inp{padding-right:70px}
+.calcb{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:48px;height:48px;border:0;border-radius:16px;background:var(--sur);font-size:24px;cursor:pointer;display:grid;place-items:center}
+#calc .ov{z-index:80}
+.sheet.calc{padding-top:8px}
+.calc .cx{text-align:right;padding:6px 8px 12px;min-height:76px;display:flex;flex-direction:column;justify-content:flex-end;gap:2px}
+.calc .cx small{color:var(--mut);font-size:18px;min-height:22px}
+.calc .cx b{font-size:38px;font-weight:700;word-break:break-all;line-height:1.15}
+.calc .ck{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.calc .ck button{height:62px;border:0;border-radius:20px;background:var(--sur);color:var(--ink);font-size:26px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.calc .ck button:active{transform:scale(.96)}
+.calc .ck .op{background:rgba(14,159,110,.14);color:var(--p)}
+.calc .ck .fn{color:#dc2626}
+.calc .ck .eq{background:var(--p);color:#fff}
+.calc .ck .ok{grid-column:span 1;background:linear-gradient(135deg,#34d399,#0b8a5f);color:#fff;font-size:17px}
+
+.si.ok{color:var(--pr,#0f9d73);font-weight:700}
+
+.rng{display:flex;gap:10px;align-items:center}
+.rng label{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin:0}
+.rng .inp,.gpr .inp,.sumc .rng .inp{margin-top:0;height:40px;font-size:14px;padding:0 8px;flex:1;min-width:0;width:auto;text-align:center;border-radius:12px}

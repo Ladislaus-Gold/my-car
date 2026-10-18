@@ -251,7 +251,7 @@
       { k: 'name', t: 'text', ph: 'Название' }, DATE, MILE,
       { k: 'cost', t: 'money', l: 'Стоимость ₴' },
       { k: 'note', t: 'textarea', l: 'Примечание', ph: 'Примечание' }] },
-    insurance: { info: 'После сохранения автоматически создаётся напоминание о продлении страховки (→ Будущие события)', fields: [
+    insurance: { info: 'После сохранения автоматически создаётся напоминание о продлении страховки (→ События)', fields: [
       { k: 'company', t: 'text', l: 'Страховая компания', req: 1 },
       { k: 'policy', t: 'text', l: 'Номер полиса' },
       { k: 'start', t: 'date', l: 'Дата начала' },
@@ -268,7 +268,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.0.15';
+  var VERSION = '2.0.18';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -419,7 +419,7 @@
       '<div class="card" style="margin-top:12px"><div class="stl">Язык</div><div class="opt">' + o2.map(function (o) { return '<button data-lang="' + o[0] + '" class="' + (lg === o[0] ? 'on' : '') + '"><i>' + o[1] + '</i>' + o[2] + '</button>'; }).join('') + '</div></div>';
   }
   function tabbar(a) {
-    var T = [['garage', 'Гараж', 'carfront'], ['upcoming', 'Будущие события', 'calcheck'], ['analytics', 'Аналитика', 'chart'], ['profile', 'Профиль', 'user']];
+    var T = [['garage', 'Гараж', 'carfront'], ['upcoming', 'События', 'calcheck'], ['analytics', 'Аналитика', 'chart'], ['profile', 'Профиль', 'user']];
     return '<nav class="tabbar">' + T.map(function (t) { return '<a class="tab ' + (a === t[0] ? 'on' : '') + '" href="#/' + t[0] + '">' + I(t[2], 24) + '<span>' + t[1] + '</span></a>'; }).join('') + '</nav>';
   }
   function page(o) {
@@ -448,6 +448,44 @@
   function confirmDel(text, label, fn) { sheet(text, [{ label: label, icon: 'trash', danger: 1, fn: fn }]); }
 
   /* ---------- спільні обробники (маски, вкладення) ---------- */
+  /* ---------- Калькулятор для сумм ---------- */
+  function calcEval(str) {
+    var t = str.replace(/\s+/g, '').replace(/,/g, '.').replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-'), i = 0;
+    function num() {
+      var neg = false; while (t[i] === '-' || t[i] === '+') { if (t[i] === '-') neg = !neg; i++; }
+      var m = /^\d*\.?\d*/.exec(t.slice(i))[0]; if (m === '' || m === '.') throw 0; i += m.length; return neg ? -parseFloat(m) : parseFloat(m);
+    }
+    function term() { var v = num(); while (t[i] === '*' || t[i] === '/') { var o = t[i++], r = num(); if (o === '/' && r === 0) throw 0; v = o === '*' ? v * r : v / r; } return v; }
+    function expr() { var v = term(); while (t[i] === '+' || t[i] === '-') { var o = t[i++], r = term(); v = o === '+' ? v + r : v - r; } return v; }
+    if (!t) return 0; var v = expr(); if (i < t.length) throw 0; return Math.round(v * 100) / 100;
+  }
+  function openCalc(input) {
+    var old = document.getElementById('calc'); if (old) old.remove();
+    var expr = input.value ? String(input.value) : '', res = null, host = document.createElement('div'); host.id = 'calc';
+    var keys = ['C', '⌫', '÷', '×', '7', '8', '9', '−', '4', '5', '6', '+', '1', '2', '3', '=', '0', '.', '00', 'OK'];
+    host.innerHTML = '<div class="ov"><div class="sheet calc"><div class="grab"></div><div class="cx"><small></small><b></b></div><div class="ck">' +
+      keys.map(function (k) { return '<button type="button" data-k="' + k + '" class="' + (/[÷×−+]/.test(k) ? 'op' : k === '=' ? 'eq' : k === 'OK' ? 'ok' : k === 'C' || k === '⌫' ? 'fn' : '') + '">' + (k === 'OK' ? 'Готово' : k) + '</button>'; }).join('') + '</div></div></div>';
+    document.body.appendChild(host);
+    var sm = host.querySelector('small'), bg = host.querySelector('.cx b');
+    function draw() { var live = null; try { live = calcEval(expr); } catch (e) {} bg.textContent = expr === '' ? '0' : expr.replace(/\*/g, '×'); sm.textContent = res !== null ? '= ' + res : (live !== null && /[÷×−+]/.test(expr.slice(1)) ? '= ' + live : ''); }
+    draw();
+    function done(apply) {
+      if (apply) { var v; try { v = calcEval(expr); } catch (e) { return toast('Проверьте выражение'); } input.value = v === 0 && !expr ? '' : String(v); input.dispatchEvent(new Event('input', { bubbles: true })); var f = input.closest('.fld'); if (f) f.classList.remove('err'); }
+      host.remove();
+    }
+    host.onclick = function (e) {
+      var b = e.target.closest('[data-k]');
+      if (!b) { if (e.target.classList.contains('ov')) done(false); return; }
+      var k = b.dataset.k;
+      if (k === 'OK') return done(true);
+      if (k === 'C') { expr = ''; res = null; }
+      else if (k === '⌫') { expr = expr.slice(0, -1); res = null; }
+      else if (k === '=') { try { res = calcEval(expr); expr = String(res); res = null; } catch (er) { toast('Проверьте выражение'); } }
+      else { if (res !== null) res = null; if (/[÷×−+]/.test(k) && (expr === '' || /[÷×−+]$/.test(expr))) { if (expr === '' && k !== '−') { draw(); return; } expr = expr.replace(/[÷×−+]$/, ''); } expr += k; }
+      draw();
+    };
+  }
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-calc]'); if (!b) return; e.preventDefault(); var inp = b.parentNode.querySelector('input'); if (inp) openCalc(inp); });
   function syncNative(e) {
     var n = e.target; if (!n || !n.classList || !n.classList.contains('native')) return;
     var txt = n.parentNode.querySelector('.dt'); if (txt) n.value = parseD(txt.value) || '';
@@ -592,7 +630,7 @@
     switch (f.t) {
       case 'date': inp = dateInp(f.k, (v === '' && (f.k === 'date' || f.k === 'start')) ? today() : v, f.slash); break;
       case 'num': inp = '<input class="inp" name="' + f.k + '" inputmode="numeric" data-num autocomplete="off" placeholder="' + esc(f.ph || '') + '" value="' + esc(v) + '">'; break;
-      case 'money': inp = '<input class="inp" name="' + f.k + '" inputmode="decimal" data-dec autocomplete="off" placeholder="' + esc(f.ph || '0.00') + '" value="' + esc(v) + '">'; break;
+      case 'money': inp = '<div class="moneyw"><input class="inp" name="' + f.k + '" inputmode="decimal" data-dec autocomplete="off" placeholder="' + esc(f.ph || '0.00') + '" value="' + esc(v) + '"><button type="button" class="calcb" data-calc aria-label="Калькулятор">🧮</button></div>'; break;
       case 'text': inp = '<input class="inp" name="' + f.k + '" autocomplete="off" placeholder="' + esc(f.ph || '') + '" value="' + esc(v) + '">'; break;
       case 'textarea': inp = '<textarea class="inp" name="' + f.k + '" placeholder="' + esc(f.ph || '') + '">' + esc(v) + '</textarea>'; break;
       case 'select': inp = selectEl(f.k, f.opts, v, f.ph); break;
@@ -995,7 +1033,7 @@
       : '<div class="wtop"><input class="wname" name="name" placeholder="Название" autocomplete="off" style="flex:1">' + (n > 1 ? '<button type="button" class="rmw" aria-label="Удалить">' + I('x', 18) + '</button>' : '') + '</div>';
     h += fs.map(function (f) { return fld(f); }).join('');
     if (!diag) {
-      h += '<div class="fld" data-k="remDate"><label class="lbl">Напоминание</label>' + dateInp('remDate', '', true) + '</div><div class="fld kmw" data-k="remKm">' + I('gauge', 26) + '<input class="inp" name="remKm" inputmode="numeric" data-num placeholder="Через N км" autocomplete="off"></div><p class="hint">Напоминание попадёт в \'Будущие события\'</p>';
+      h += '<div class="fld" data-k="remDate"><label class="lbl">Напоминание</label>' + dateInp('remDate', '', true) + '</div><div class="fld kmw" data-k="remKm">' + I('gauge', 26) + '<input class="inp" name="remKm" inputmode="numeric" data-num placeholder="Через N км" autocomplete="off"></div><p class="hint">Напоминание попадёт в \'События\'</p>';
     }
     h += attBox('Вложения ко всему событию');
     if (!diag) h += '<button type="button" class="exp">Расширенная информация ' + I('down', 22) + '</button><div class="expbody hidden">' + fld({ k: 'parts', t: 'text', l: 'Запчасти / материалы', ph: 'Название, артикул' }) + fld({ k: 'warranty', t: 'num', l: 'Гарантия (мес.)', ph: 'напр. 12' }) + '</div>';
@@ -1019,15 +1057,19 @@
     else if (el.tagName === 'SELECT') { if (![].some.call(el.options, function (o) { return o.value === String(v); })) { var op = document.createElement('option'); op.textContent = v; el.appendChild(op); } el.value = v; el.classList.remove('empty'); }
     else el.value = v;
   }
-  function recordForm(id, cat, evId) {
+  function recordForm(id, cat, evId, rep) {
     var c = S.car(id); if (!c) return go('#/garage');
     var EV = evId ? S.db.events.find(function (x) { return x.id === evId; }) : null; if (evId && !EV) return go('#/car/' + id);
-    var fv = function (f) { if (!EV) return undefined; return f.core && f.k === 'date' ? EV.date : f.core && f.k === 'mileage' ? (EV.mileage || '') : (EV.data || {})[f.k]; };
+    var fv = function (f) {
+      if (!EV) return undefined;
+      if (rep) { if (f.core && f.k === 'date') return today(); if (f.core && f.k === 'mileage') return ''; var v0 = (EV.data || {})[f.k]; return typeof v0 === 'string' && /^\d{4}-\d\d-\d\d$/.test(v0) ? undefined : v0; }
+      return f.core && f.k === 'date' ? EV.date : f.core && f.k === 'mileage' ? (EV.mileage || '') : (EV.data || {})[f.k];
+    };
     var k = M.cat(cat), sch = M.SCHEMAS[cat], body = '';
     if (sch.kind === 'works') {
       body = sch.head.map(function (f) { return fld(f, fv(f)); }).join('') + '<div id="works">' + workCard(cat, 1) + '</div>' +
         '<section class="card sumcard"><div class="fld" data-k="note"><label class="lbl">Заметка</label><textarea class="inp" name="note" placeholder="Заметка ко всему событию"></textarea></div>' +
-        '<div class="fld" data-k="total"><label class="lbl">Общая сумма ₴</label><input class="inp" name="total" inputmode="decimal" data-dec placeholder="0.00" autocomplete="off"></div>' + attBox('Вложения ко всему событию', 'final') + '</section>' +
+        '<div class="fld" data-k="total"><label class="lbl">Общая сумма ₴</label><div class="moneyw"><input class="inp" name="total" inputmode="decimal" data-dec placeholder="0.00" autocomplete="off"><button type="button" class="calcb" data-calc aria-label="Калькулятор">🧮</button></div></div>' + attBox('Вложения ко всему событию', 'final') + '</section>' +
         '<button type="button" class="btn outline" id="addw" style="margin-top:22px">' + I('plus', 22) + ' ' + sch.addLabel + '</button>';
     } else if (cat === 'mileage') {
       body = '<div class="infobox blue">' + I('info', 30) + '<div><b>Запись пробега</b>Фиксируйте текущий пробег автомобиля для точного отслеживания истории обслуживания и планирования будущих событий.</div></div>' +
@@ -1035,8 +1077,9 @@
     } else {
       body = (sch.info ? '<div class="infobox">' + I('info', 28) + '<span>' + esc(sch.info) + '</span></div>' : '') + sch.fields.map(function (f) { return fld(f, fv(f)); }).join('') + (sch.att === false ? '' : attBox('Вложения ко всему событию'));
     }
-    page({ title: (EV ? 'Изменить: ' : '') + k.label + ' (' + carName(c) + ')', back: '#/car/' + id, body: '<form id="f" data-cat="' + cat + '" novalidate>' + body + '</form>', footer: '<button class="btn primary" id="save" type="button">Сохранить</button>' });
-    if (EV) prefillEvent(EV, cat, sch);
+    page({ title: (EV && !rep ? 'Изменить: ' : '') + k.label + ' (' + carName(c) + ')', back: '#/car/' + id, body: '<form id="f" data-cat="' + cat + '" novalidate>' + body + '</form>', footer: '<button class="btn primary" id="save" type="button">Сохранить</button>' });
+    if (EV) prefillEvent(EV, cat, sch, rep);
+    if (rep) toast('Данные из прошлой записи — проверьте и дополните');
     setH({
       click: function (e) {
         if (e.target.closest('#addw')) {
@@ -1044,7 +1087,7 @@
           $('#works').appendChild(d.firstChild); $$('[data-work]')[n - 1].scrollIntoView({ behavior: 'smooth', block: 'start' }); return;
         }
         if (e.target.closest('#tyedit')) return tyreSheet($('#f'));
-        if (e.target.closest('#save')) saveRecord(id, cat, EV);
+        if (e.target.closest('#save')) saveRecord(id, cat, rep ? null : EV);
       },
       change: function (e) {
         var nm = e.target.name, ff = $('#f');
@@ -1062,7 +1105,13 @@
       }
     });
   }
-  function prefillEvent(EV, cat, sch) {
+  function shiftRem(rd0, evDate) {
+    if (!rd0) return '';
+    var a = new Date(rd0 + 'T00:00:00'), b = new Date((evDate || rd0) + 'T00:00:00'), t = new Date(today() + 'T00:00:00');
+    var diff = Math.round((a - b) / 864e5); if (!(diff > 0)) return '';
+    t.setDate(t.getDate() + diff); return t.getFullYear() + '-' + pad(t.getMonth() + 1) + '-' + pad(t.getDate());
+  }
+  function prefillEvent(EV, cat, sch, rep) {
     var form = $('#f'), d = EV.data || {};
     if (sch.kind === 'works') {
       var ws = d.works || [];
@@ -1070,11 +1119,11 @@
         if (i > 0) { var tmp = document.createElement('div'); tmp.innerHTML = workCard(cat, i + 1); $('#works').appendChild(tmp.firstChild); }
         var card = $$('[data-work]')[i];
         workFields(cat).forEach(function (f) { fillField(card, f.k, w[f.k]); });
-        fillField(card, 'name', w.name); fillField(card, 'remDate', w.remDate); fillField(card, 'remKm', w.remKm || ''); fillField(card, 'parts', w.parts); fillField(card, 'warranty', w.warranty || '');
-        var box = card.querySelector('[data-att]'); if (box && w.files && w.files.length) { box._f = w.files.slice(); drawThumbs(box); }
+        fillField(card, 'name', w.name); fillField(card, 'remDate', rep ? shiftRem(w.remDate, EV.date) : w.remDate); fillField(card, 'remKm', w.remKm || ''); fillField(card, 'parts', w.parts); fillField(card, 'warranty', w.warranty || '');
+        var box = card.querySelector('[data-att]'); if (!rep && box && w.files && w.files.length) { box._f = w.files.slice(); drawThumbs(box); }
       });
-      fillField(form, 'note', d.note); fillField(form, 'total', d.total);
-      var fb = form.querySelector('.final[data-att]'); if (fb && EV.files && EV.files.length) { fb._f = EV.files.slice(); drawThumbs(fb); }
+      if (!rep) { fillField(form, 'note', d.note); fillField(form, 'total', d.total); }
+      var fb = form.querySelector('.final[data-att]'); if (!rep && fb && EV.files && EV.files.length) { fb._f = EV.files.slice(); drawThumbs(fb); }
       return;
     }
     if (cat === 'fuel') {
@@ -1086,13 +1135,13 @@
         var go2 = form.querySelector('[name=gradeOther]'); go2.classList.toggle('hidden', inList || !d.fuelGrade); if (!inList && d.fuelGrade) go2.value = d.fuelGrade;
       }
     }
-    var pd = form.querySelector('[name=paid]'); if (pd && d.paid) { pd.checked = true; pd.parentNode.querySelector('b').textContent = 'Оплачено'; }
+    var pd = form.querySelector('[name=paid]'); if (!rep && pd && d.paid) { pd.checked = true; pd.parentNode.querySelector('b').textContent = 'Оплачено'; }
     if (cat === 'tire' && d.bought) {
       var cb = form.querySelector('[name=bought]'); cb.checked = true;
       form.querySelector('[name=tyreName]').value = d.tyreName || ''; form.querySelector('[name=tyreCost]').value = d.tyreCost || 0;
       var info = form.querySelector('.tyinfo'); info.firstChild.textContent = (d.tyreName || '') + ' · ' + money(d.tyreCost || 0); info.classList.remove('hidden');
     }
-    var ab = form.querySelector('[data-att]'); if (ab && EV.files && EV.files.length) { ab._f = EV.files.slice(); drawThumbs(ab); }
+    var ab = form.querySelector('[data-att]'); if (!rep && ab && EV.files && EV.files.length) { ab._f = EV.files.slice(); drawThumbs(ab); }
   }
   function tyreSheet(f) {
     var nm = f.querySelector('[name=tyreName]'), co = f.querySelector('[name=tyreCost]'), cb = f.querySelector('[name=bought]'), info = f.querySelector('.tyinfo');
@@ -1123,6 +1172,11 @@
     if (!S.putEvent(ev)) return toast('Не удалось сохранить: закончилось место. Удалите часть вложений');
     if (isEdit) S.db.reminders.filter(function (r) { return r.eventId === ev.id; }).forEach(function (r) { S.delReminder(r.id); });
     rems.forEach(function (r) { r.id = S.uid(); r.carId = id; r.eventId = ev.id; S.putReminder(r); });
+    if (ui.doneRem) {
+      var dev = ui.doneEv; S.delReminder(ui.doneRem);
+      if (dev) S.db.reminders.filter(function (r) { return r.eventId === dev; }).forEach(function (r) { S.delReminder(r.id); });
+      ui.doneRem = null; ui.doneEv = null;
+    }
     toast('Сохранено'); go('#/car/' + id);
   }
   function saveRecord(id, cat, old) {
@@ -1182,9 +1236,10 @@
     rows.push(['Источник', r.manual ? 'Создано мной' : 'Из записи']);
     layer.innerHTML = '<div class="ov"><div class="sheet"><div class="grab"></div><h4>' + esc(r.title) + '</h4>' +
       rows.map(function (x) { return '<div class="kv"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('') +
-      (ev ? '<button class="si" data-oev>' + I('calcheck', 22) + '<span>Открыть запись</span></button>' : '') +
+      '<button class="si ok" data-rdone>' + I('calcheck', 22) + '<span>Выполнено</span></button>' + (ev ? '<button class="si" data-oev>' + I('calcheck', 22) + '<span>Открыть запись</span></button>' : '') +
       '<button class="si danger" data-drm>' + I('trash', 22) + '<span>Удалить напоминание</span></button><button class="si cancel">Закрыть</button></div></div>';
     layer.onclick = function (e) {
+      if (e.target.closest('[data-rdone]')) { closeLayer(); ui.doneRem = r.id; ui.doneEv = ev ? ev.id : null; return go(ev ? '#/car/' + r.carId + '/event/' + ev.id + '/repeat' : '#/car/' + r.carId + '/record'); }
       if (e.target.closest('[data-oev]')) { closeLayer(); return showEvent(ev); }
       if (e.target.closest('[data-drm]')) { closeLayer(); return confirmDel('Удалить напоминание?', 'Да, удалить', function () { S.delReminder(r.id); render(); }); }
       if (e.target.classList.contains('ov') || e.target.closest('.cancel')) closeLayer();
@@ -1197,7 +1252,7 @@
   function upcoming() {
     var cars = S.cars(false);
     if (!cars.length) {
-      page({ title: 'Будущие события', left: true, nav: 'upcoming', body: '<div class="noev">' + I('calcheck', 64) + '<span>Сначала добавьте авто</span></div><a class="btn primary" href="#/car/new">' + I('plus', 24) + ' Добавить авто</a>' });
+      page({ title: 'События', left: true, nav: 'upcoming', body: '<div class="noev">' + I('calcheck', 64) + '<span>Сначала добавьте авто</span></div><a class="btn primary" href="#/car/new">' + I('plus', 24) + ' Добавить авто</a>' });
       return setH({});
     }
     if (!cars.some(function (c) { return c.id === ui.upCar; })) ui.upCar = cars[0].id;
@@ -1220,7 +1275,7 @@
     }).join('') + '<h2 class="h2">Управление по авто</h2>' : '';
     var tabs = [['mine', 'Созданные мной'], ['date', 'Запланированные по дате'], ['km', 'Запланированные по пробегу']];
     page({
-      title: 'Будущие события', left: true, nav: 'upcoming',
+      title: 'События', left: true, nav: 'upcoming',
       body: soonHtml + '<div class="upcar">' + (cars.length > 1 ? '<button id="prev" aria-label="Предыдущее">' + I('left', 26) + '</button>' : '') + upCard(c) + (cars.length > 1 ? '<button id="next" aria-label="Следующее">' + I('right', 26) + '</button>' : '') + '</div>' +
         '<div class="pills">' + tabs.map(function (t) { return '<button data-t="' + t[0] + '" class="' + (ui.upTab === t[0] ? 'on' : '') + '">' + t[1] + '</button>'; }).join('') + '</div>' +
         (rs.length ? rs.map(function (r) {
@@ -1249,7 +1304,7 @@
       title: 'Запланировать событие', back: '#/upcoming',
       body: '<form id="f" novalidate>' + fld({ k: 'title', t: 'text', l: 'Название', req: 1, ph: 'напр. Замена масла' }) +
         '<div class="fld" data-k="date"><label class="lbl">Дата</label>' + dateInp('date', '', true) + '</div><div class="fld kmw" data-k="km" style="margin-top:14px">' + I('gauge', 26) + '<input class="inp" name="km" inputmode="numeric" data-num placeholder="Через N км" autocomplete="off"></div>' +
-        '<p class="hint">Укажите дату, пробег или оба параметра. Напоминание попадёт в \'Будущие события\'</p>' + fld({ k: 'note', t: 'textarea', l: 'Примечание', ph: 'Примечание' }) + '</form>',
+        '<p class="hint">Укажите дату, пробег или оба параметра. Напоминание попадёт в \'События\'</p>' + fld({ k: 'note', t: 'textarea', l: 'Примечание', ph: 'Примечание' }) + '</form>',
       footer: '<button class="btn primary" id="save">Сохранить</button>'
     });
     setH({
@@ -1479,6 +1534,7 @@
     [/^#\/car\/([^/]+)\/edit$/, carForm], [/^#\/car\/([^/]+)\/record$/, recordPick],
     [/^#\/car\/([^/]+)\/record\/([a-z]+)$/, function (id, cat) { if (!M.SCHEMAS[cat]) return go('#/car/' + id + '/record'); recordForm(id, cat); }],
     [/^#\/car\/([^/]+)\/event\/([^/]+)\/edit$/, function (id, evId) { var ev = S.db.events.find(function (x) { return x.id === evId; }); if (!ev || !M.SCHEMAS[ev.category]) return go('#/car/' + id); recordForm(id, ev.category, evId); }],
+    [/^#\/car\/([^/]+)\/event\/([^/]+)\/repeat$/, function (id, evId) { var ev = S.db.events.find(function (x) { return x.id === evId; }); if (!ev || !M.SCHEMAS[ev.category]) return go('#/car/' + id + '/record'); recordForm(id, ev.category, evId, true); }],
     [/^#\/car\/([^/]+)\/history(?:\/([a-z]+))?$/, history], [/^#\/car\/([^/]+)\/plan$/, planForm],
     [/^#\/car\/([^/]+)$/, about], [/^#\/upcoming$/, upcoming], [/^#\/services$/, function () { go('#/analytics'); }],
     [/^#\/analytics$/, analytics], [/^#\/profile$/, profile]
@@ -1488,6 +1544,7 @@
   function render() {
     closeLayer();
     var h = location.hash || '#/garage';
+    if (!/\/(record|repeat)/.test(h)) ui.doneRem = null;
     for (var n = 0; n < 3; n++) {
       var gd = guard(h);
       if (gd === 'splash') return splash();
