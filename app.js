@@ -266,7 +266,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '1.0.12';
+  var VERSION = '1.0.13';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -334,6 +334,41 @@
     if (g && !$('#updbanner') && hasNew()) { var b = $('.body'); if (b) b.insertAdjacentHTML('afterbegin', banner()); }
   }
   function banner() { return '<button class="upbanner" id="updbanner" data-upd>' + I('refresh', 22) + '<span><b>Доступна новая версия v' + esc(ui.latest) + '</b><small>Нажмите, чтобы обновить (сейчас v' + VERSION + ')</small></span></button>'; }
+  /* просмотр вложений и фото внутри приложения */
+  function viewer(list, idx) {
+    var v = document.getElementById('viewer'); if (v) v.remove();
+    list = (list || []).filter(function (f) { return f && f.url; }); if (!list.length) return;
+    var i = Math.max(0, Math.min(idx || 0, list.length - 1)), z = false;
+    v = document.createElement('div'); v.id = 'viewer'; document.body.appendChild(v);
+    function close() { document.removeEventListener('keydown', key); v.remove(); }
+    function key(e) { if (e.key === 'Escape') close(); else if (e.key === 'ArrowRight') go1(1); else if (e.key === 'ArrowLeft') go1(-1); }
+    function go1(d) { var n = i + d; if (n < 0 || n >= list.length) return; i = n; z = false; draw(); }
+    function draw() {
+      var f = list[i], img = (f.type || '').indexOf('image') === 0;
+      v.innerHTML = '<div class="vtop"><span>' + (list.length > 1 ? (i + 1) + ' / ' + list.length : '') + '</span><button class="vx" aria-label="Закрыть">' + I('x', 26) + '</button></div>' +
+        '<div class="vst">' + (img ? '<img src="' + f.url + '" alt="">' : '<div class="vfile">' + I('doc', 56) + '<b>' + esc(f.name || 'Файл') + '</b><a class="btn primary" href="' + f.url + '" download="' + esc(f.name || 'file') + '" style="width:auto;padding:0 28px">Скачать</a></div>') + '</div>' +
+        (list.length > 1 ? '<button class="vn vp" ' + (i ? '' : 'disabled') + '>‹</button><button class="vn vnx" ' + (i < list.length - 1 ? '' : 'disabled') + '>›</button>' : '');
+    }
+    draw();
+    var sx = 0;
+    v.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+    v.addEventListener('touchend', function (e) { var dx = e.changedTouches[0].clientX - sx; if (!z && Math.abs(dx) > 60) go1(dx < 0 ? 1 : -1); }, { passive: true });
+    v.addEventListener('click', function (e) {
+      if (e.target.closest('.vx')) return close();
+      if (e.target.closest('.vp')) return go1(-1);
+      if (e.target.closest('.vnx')) return go1(1);
+      var im = e.target.closest('.vst img');
+      if (im) { z = !z; var r = im.getBoundingClientRect(); im.style.transformOrigin = ((e.clientX - r.left) / r.width * 100) + '% ' + ((e.clientY - r.top) / r.height * 100) + '%'; im.classList.toggle('zm', z); return; }
+      if (e.target.closest('.vst') && !e.target.closest('a')) close();
+    });
+    document.addEventListener('keydown', key);
+  }
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest && e.target.closest('.vw'); if (!el || el.closest('#viewer')) return;
+    var cont = el.closest('.dthumbs'), list = null;
+    if (cont) list = cont._vwl; else { var box = el.closest('[data-att]'); if (box) list = box._f; }
+    if (list) { e.preventDefault(); e.stopPropagation(); viewer(list, +el.dataset.i || 0); }
+  }, true);
   function closeLayer() { layer.innerHTML = ''; layer.onclick = null; }
 
   /* ---------- шаблон сторінки ---------- */
@@ -360,7 +395,7 @@
   }
   function tabbar(a) {
     var T = [['garage', 'Гараж', 'carfront'], ['upcoming', 'Будущие события', 'calcheck'], ['analytics', 'Аналитика', 'chart'], ['profile', 'Профиль', 'user']];
-    return '<nav class="tabbar">' + T.map(function (t) { return '<a class="tab ' + (a === t[0] ? 'on' : '') + '" href="#/' + t[0] + '">' + I(t[2], 30) + '<span>' + t[1] + '</span></a>'; }).join('') + '</nav>';
+    return '<nav class="tabbar">' + T.map(function (t) { return '<a class="tab ' + (a === t[0] ? 'on' : '') + '" href="#/' + t[0] + '">' + I(t[2], 24) + '<span>' + t[1] + '</span></a>'; }).join('') + '</nav>';
   }
   function page(o) {
     var right = o.right !== undefined ? o.right : '';
@@ -501,7 +536,7 @@
   function drawThumbs(box) {
     var th = box.querySelector('.thumbs');
     th.innerHTML = (box._f || []).map(function (f, i) {
-      return '<div class="th">' + (f.type.indexOf('image') === 0 ? '<img src="' + f.url + '" alt="">' : '<span>' + esc(f.name.slice(0, 16)) + '</span>') + '<button type="button" data-rm="' + i + '">' + I('x', 16) + '</button></div>';
+      return '<div class="th">' + (f.type.indexOf('image') === 0 ? '<img class="vw" data-i="' + i + '" src="' + f.url + '" alt="">' : '<span>' + esc(f.name.slice(0, 16)) + '</span>') + '<button type="button" data-rm="' + i + '">' + I('x', 16) + '</button></div>';
     }).join('');
   }
   function attBox(label, cls, max) {
@@ -647,9 +682,11 @@
     var k = M.cat(e.category), fl = allFiles(e);
     layer.innerHTML = '<div class="ov"><div class="sheet"><div class="grab"></div><h4>' + esc(evTitle(e)) + '</h4>' +
       eventLines(e).map(function (r) { return r[1] === null ? '<div class="kvh">' + esc(r[0]) + '</div>' : '<div class="kv"><span>' + esc(r[0]) + '</span><b>' + esc(r[1]) + '</b></div>'; }).join('') +
-      (fl.length ? '<div class="dthumbs">' + fl.map(function (f) { return '<a href="' + f.url + '" download="' + esc(f.name) + '">' + (f.type.indexOf('image') === 0 ? '<img src="' + f.url + '" alt="">' : esc(f.name.slice(0, 14))) + '</a>'; }).join('') + '</div>' : '') +
+      (fl.length ? '<div class="dthumbs">' + fl.map(function (f, i) { return '<a href="' + f.url + '" class="vw" data-i="' + i + '">' + (f.type.indexOf('image') === 0 ? '<img src="' + f.url + '" alt="">' : esc(f.name.slice(0, 14))) + '</a>'; }).join('') + '</div>' : '') +
       '<button class="si danger" data-del>' + I('trash', 22) + '<span>Удалить запись</span></button><button class="si cancel">Закрыть</button></div></div>';
+    var dt = layer.querySelector('.dthumbs'); if (dt) dt._vwl = fl;
     layer.onclick = function (ev) {
+      if (ev.target.closest('.vw')) { ev.preventDefault(); return; }
       if (ev.target.closest('[data-del]')) { closeLayer(); confirmDel('Удалить эту запись?', 'Да, удалить', function () { S.delEvent(e.id); toast('Запись удалена'); render(); }); return; }
       if (ev.target.classList.contains('ov') || ev.target.closest('.cancel')) closeLayer();
     };

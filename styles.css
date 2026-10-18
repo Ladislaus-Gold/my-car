@@ -290,3 +290,21 @@ html,body{width:100%;max-width:100%;overscroll-behavior:none;touch-action:pan-y;
 .page:has(.foot) .body{padding-bottom:140px}
 html{overflow-x:hidden}
 body{overflow-x:clip;overflow-y:visible}
+
+/* нижнее меню — компактное, как в примере (Health) */
+.tabbar{width:calc(100% - 24px);max-width:456px;bottom:calc(8px + env(safe-area-inset-bottom));padding:6px;gap:2px;border-radius:26px;background:#fff;box-shadow:0 6px 26px rgba(40,20,90,.16)}
+.tab{flex:1;min-width:0;padding:7px 2px 6px;gap:2px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;line-height:1.2}
+.tab svg{width:24px;height:24px}
+.page:has(.tabbar) .body{padding-bottom:96px}
+.fab{bottom:calc(96px + env(safe-area-inset-bottom))}
+/* просмотр фото */
+#viewer{position:fixed;inset:0;z-index:100;background:#0a0814;display:flex;flex-direction:column;touch-action:manipulation}
+.vtop{display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 16px 8px;color:#fff;font-size:17px}
+.vx{width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;display:grid;place-items:center;cursor:pointer}
+.vst{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:8px}
+.vst img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;transition:transform .2s;cursor:zoom-in}
+.vst img.zm{transform:scale(2.6);cursor:zoom-out}
+.vfile{display:flex;flex-direction:column;align-items:center;gap:16px;color:#fff;text-align:center}
+.vn{position:absolute;top:50%;width:46px;height:62px;border:0;border-radius:14px;background:rgba(255,255,255,.16);color:#fff;font-size:34px;cursor:pointer;transform:translateY(-50%)}
+.vn:disabled{opacity:.25}.vp{left:8px}.vnx{right:8px}
+.th img{cursor:zoom-in}
