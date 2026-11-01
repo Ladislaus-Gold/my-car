@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.2.0';
+  var VERSION = '2.3.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -1098,6 +1098,17 @@
     }
     page({ title: (EV && !rep ? 'Изменить: ' : '') + k.label + ' (' + carName(c) + ')', back: '#/car/' + id, body: '<form id="f" data-cat="' + cat + '" novalidate>' + body + '</form>', footer: '<button class="btn primary" id="save" type="button">Сохранить</button>' });
     if (EV) prefillEvent(EV, cat, sch, rep);
+    (function () {
+      var ff = $('#f'), mb = function () { return ff.querySelector('[name=cost]') || ff.querySelector('[name=amount]') || ff.querySelector('[name=total]'); };
+      var chips = EV ? '' : '<div class="rchips">' + M.CATS.map(function (x) { return '<button type="button" data-rc="' + x.id + '" class="' + (x.id === cat ? 'on' : '') + '">' + x.label + '</button>'; }).join('') + '</div>';
+      var big = mb() ? '<div class="bigamt" id="bigamt"><small>Сумма</small><b><span id="bigv">0</span> <u>₴</u></b></div>' : '';
+      $('.body').insertAdjacentHTML('afterbegin', big + chips);
+      var upd = function () { var m = mb(), v = m ? parseFloat(String(m.value).replace(/\s/g, '').replace(',', '.')) : 0, el = $('#bigv'); if (el) el.textContent = v > 0 ? fmtN(v) : '0'; };
+      var rc = $('.rchips'), on = rc && rc.querySelector('.on'); if (on) rc.scrollLeft = on.offsetLeft - 18;
+      upd(); ff.addEventListener('input', upd); ff.addEventListener('change', upd);
+      var ba = $('#bigamt'); if (ba) ba.onclick = function () { var m = mb(); if (m) { m.scrollIntoView({ block: 'center' }); m.focus(); } };
+      $$('[data-rc]').forEach(function (b) { b.onclick = function () { if (b.dataset.rc !== cat) location.replace('#/car/' + id + '/record/' + b.dataset.rc); }; });
+    })();
     if (rep) toast('Данные из прошлой записи — проверьте и дополните');
     setH({
       click: function (e) {
