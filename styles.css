@@ -715,3 +715,11 @@ html[data-theme=dark] .rg-note{color:var(--p)}html[data-theme=dark] .rg-note.war
 .rg-sheet .si.ok{color:var(--p);font-weight:600}
 .rg-sheet .chk{margin-top:14px}.rg-sheet .lbl{margin-left:4px}
 .foot .btn+.btn{margin-top:10px}
+
+/* v2.1.1: «+» в центре нижней панели вместо плавающей кнопки */
+.tabbar{align-items:center;overflow:visible;padding:6px 8px}
+.tab{font-size:11px;padding:8px 0 7px}
+.tabadd{flex:none;width:62px;height:62px;margin:-28px 4px 0;border:0;border-radius:50%;display:grid;place-items:center;color:#fff;cursor:pointer;background:linear-gradient(145deg,#9B80FF,#6246E0);box-shadow:0 10px 24px rgba(98,70,224,.5),0 0 0 5px var(--bg);-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.tabadd svg{width:30px;height:30px;stroke-width:2.2}
+.tabadd:active{transform:scale(.93)}
+.fab{display:none}

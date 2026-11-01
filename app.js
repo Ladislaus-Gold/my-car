@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.1.0';
+  var VERSION = '2.1.1';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -428,7 +428,9 @@
   }
   function tabbar(a) {
     var T = [['garage', 'Гараж', 'carfront'], ['upcoming', 'События', 'calcheck'], ['analytics', 'Аналитика', 'chart'], ['profile', 'Профиль', 'user']];
-    return '<nav class="tabbar">' + T.map(function (t) { return '<a class="tab ' + (a === t[0] ? 'on' : '') + '" href="#/' + t[0] + '">' + I(t[2], 24) + '<span>' + t[1] + '</span></a>'; }).join('') + '</nav>';
+    var h = T.map(function (t) { return '<a class="tab ' + (a === t[0] ? 'on' : '') + '" href="#/' + t[0] + '">' + I(t[2], 24) + '<span>' + t[1] + '</span></a>'; });
+    h.splice(2, 0, '<button class="tabadd" id="tabadd" aria-label="Добавить запись">' + I('plus', 30) + '</button>');
+    return '<nav class="tabbar">' + h.join('') + '</nav>';
   }
   function page(o) {
     var right = o.right !== undefined ? o.right : '';
@@ -868,7 +870,7 @@
       title: 'Мой гараж', left: true, nav: 'garage',
       body: (hasNew() ? banner() : '') + garageAlerts() + '<div class="seg">' + seg.map(function (s) { return '<button data-tab="' + s[0] + '" class="' + (ui.tab === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
         '<div class="searchrow"><label class="search">' + I('search', 28) + '<input id="q" placeholder="Поиск авто" value="' + esc(ui.q) + '" autocomplete="off"></label><button class="sq" id="view" aria-label="Вид">' + I('grid', 26) + '</button></div><div id="cars"></div>' +
-        (ui.tab === 'my' ? '<button class="fab" id="add" aria-label="Добавить запись">' + I('plus', 34) + '</button>' : '')
+        ''
     });
     var draw = function () {
       var arch = ui.tab === 'arch', q = ui.q.trim().toLowerCase();
@@ -899,6 +901,7 @@
       change: function (e) { var d = e.target.dataset && e.target.dataset.gpd; if (d && e.target.value) { var o = grange('custom'); o[d === 'gpf' ? 'from' : 'to'] = e.target.value; if (o.from > o.to) { var x = o.from; o.from = o.to; o.to = x; } setPref('gpf', o.from); setPref('gpt', o.to); draw(); } }
     });
   }
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#tabadd')) { e.preventDefault(); addRecordMenu(); } });
   function addRecordMenu() {
     var cars = S.cars(false);
     if (!cars.length) return go('#/car/new');
