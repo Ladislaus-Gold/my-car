@@ -924,6 +924,7 @@
     page({
       title: 'Об авто', back: '#/garage', nav: 'garage', right: '<button class="link" id="acts">Действия с авто</button>',
       body: carHero(c, true).replace('class="car hero', 'class="car hero static') + perSeg(per) + '<a class="btn primary" style="margin-top:8px;height:62px" href="#/car/' + id + '/record">' + I('plus', 26) + ' Добавить запись</a>' +
+        (window.MCREG ? MCREG.card(c) : '') +
         '<h2 class="h2">Категории событий</h2><div class="chips">' + M.CATS.map(function (k) { return '<a class="chip ' + k.cls + '" href="#/car/' + id + '/history/' + k.id + '">' + catI(k, 22) + '<span>' + k.label + '</span></a>'; }).join('') + '</div>' +
         '<div class="rowh"><h2 class="h2">История событий</h2><a class="link" href="#/car/' + id + '/history">Смотреть все</a></div>' +
         (evs.length ? evs.slice(0, 5).map(evRow).join('') : '<p class="empty">Событий пока нет</p>') + totalBar(evs, PERN[per])
@@ -1006,7 +1007,7 @@
           photos: filesOf(box).map(function (x) { return x.url; }), archived: !!c.archived, createdAt: c.createdAt || Date.now()
         };
         if (!S.putCar(n)) return toast('Не удалось сохранить: закончилось место. Уменьшите количество фото');
-        toast('Сохранено'); go('#/car/' + n.id);
+        toast('Сохранено'); go(c.id ? '#/car/' + n.id : '#/car/' + n.id + '/setup/tech');
       },
       change: function (e) { bmyChange(e.target, $('#cf')); }
     });
@@ -1549,7 +1550,7 @@
     [/^#\/analytics$/, analytics], [/^#\/profile$/, profile]
   ];
   function reportSheet(id) { if (window.MCREP) MCREP.open(id); else toast('Отчёт загружается, попробуйте ещё раз'); }
-  window.MCAPP = { S: S, M: M, money: money, fmtD: fmtD, fmtN: fmtN, today: today, days: days, esc: esc, carName: carName, unit: unit, EMO: EMO, CCOL: CCOL, evTitle: evTitle, eventLines: eventLines, allFiles: allFiles, toast: toast, closeLayer: closeLayer, layer: layer, pad: pad, VERSION: VERSION, spendIn: spendIn, fuelAvg: fuelAvg };
+  window.MCAPP = { S: S, M: M, money: money, fmtD: fmtD, fmtN: fmtN, today: today, days: days, esc: esc, carName: carName, unit: unit, EMO: EMO, CCOL: CCOL, evTitle: evTitle, eventLines: eventLines, allFiles: allFiles, toast: toast, closeLayer: closeLayer, layer: layer, pad: pad, VERSION: VERSION, spendIn: spendIn, fuelAvg: fuelAvg, page: page, setH: setH, go: go, sheet: sheet, $: $, $$: $$, routes: R, render: render, parseD: parseD };
   function render() {
     closeLayer();
     var h = location.hash || '#/garage';
