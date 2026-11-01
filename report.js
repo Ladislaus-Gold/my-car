@@ -14,7 +14,7 @@
     }));
   }
   var esc = function (s) { return A.esc(s); };
-  var EM = '#0e9f6e';
+  var EM = '#7C5CFF';
   function monthLabel(key) { return T(A.M.MONTHS[+key.slice(5, 7) - 1]); }
   function pad(n) { return A.pad(n); }
   function ds(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -73,7 +73,7 @@
   function svgBars(R, W, H) {
     var months = R.months, max = Math.max.apply(null, months.map(function (m) { return m.sum; }).concat([1])), mag = Math.pow(10, Math.floor(Math.log10(max / 4))), stp = [1, 2, 2.5, 5, 10].map(function (k) { return k * mag; }).find(function (v) { return v * 4 >= max; }), nice = stp * 4;
     var L = 64, B = 40, Tp = 16, ch = H - B - Tp, slot = (W - L - 8) / months.length, bw = Math.min(46, slot * 0.62), g = '';
-    for (var i = 0; i <= 4; i++) { var y = Tp + ch - ch * i / 4, v = nice * i / 4; g += '<line x1="' + L + '" x2="' + (W - 8) + '" y1="' + y + '" y2="' + y + '" stroke="#e6efeb"/><text x="' + (L - 10) + '" y="' + (y + 5) + '" text-anchor="end" font-size="14" fill="#6b7f76">' + (v >= 1000 ? Math.round(v / 100) / 10 + 'k' : Math.round(v)) + '</text>'; }
+    for (var i = 0; i <= 4; i++) { var y = Tp + ch - ch * i / 4, v = nice * i / 4; g += '<line x1="' + L + '" x2="' + (W - 8) + '" y1="' + y + '" y2="' + y + '" stroke="#E5E5EA"/><text x="' + (L - 10) + '" y="' + (y + 5) + '" text-anchor="end" font-size="14" fill="#6C6C70">' + (v >= 1000 ? Math.round(v / 100) / 10 + 'k' : Math.round(v)) + '</text>'; }
     months.forEach(function (m, j) {
       var x = L + slot * j + slot / 2, yb = Tp + ch;
       A.M.CATS.forEach(function (k) { var p = m.parts[k.id]; if (!p) return; var h = ch * p / nice; yb -= h; g += '<rect x="' + (x - bw / 2) + '" y="' + yb + '" width="' + bw + '" height="' + Math.max(h, 1) + '" rx="3" fill="' + (A.CCOL[k.id] || '#999') + '"/>'; });
@@ -83,14 +83,14 @@
   }
   function svgDonut(R, W, H) {
     var cats = catList(R), cx = 170, cy = H / 2, r = 108, sw = 52, g = '', a0 = -Math.PI / 2, C = 2 * Math.PI * r;
-    if (!cats.length) { g = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#e6efeb" stroke-width="' + sw + '"/>'; }
+    if (!cats.length) { g = '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="#E5E5EA" stroke-width="' + sw + '"/>'; }
     var off = 0;
     cats.forEach(function (c) { var len = C * c.sum / R.total; g += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + c.color + '" stroke-width="' + sw + '" stroke-dasharray="' + len + ' ' + (C - len) + '" stroke-dashoffset="' + (-off) + '" transform="rotate(-90 ' + cx + ' ' + cy + ')"/>'; off += len; });
-    g += '<text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" font-size="30" font-weight="800" fill="#0f1f19">' + money0(R.total) + '</text><text x="' + cx + '" y="' + (cy + 24) + '" text-anchor="middle" font-size="15" fill="#6b7f76">' + T('Итого') + '</text>';
+    g += '<text x="' + cx + '" y="' + (cy - 2) + '" text-anchor="middle" font-size="30" font-weight="800" fill="#1C1C1E">' + money0(R.total) + '</text><text x="' + cx + '" y="' + (cy + 24) + '" text-anchor="middle" font-size="15" fill="#6C6C70">' + T('Итого') + '</text>';
     var ly = Math.max(26, cy - cats.length * 17);
     cats.forEach(function (c, i) {
       var y = ly + i * 34;
-      g += '<rect x="330" y="' + (y - 14) + '" width="16" height="16" rx="4" fill="' + c.color + '"/><text x="356" y="' + y + '" font-size="17" fill="#0f1f19">' + c.emoji + ' ' + esc(c.label) + '</text><text x="' + (W - 12) + '" y="' + y + '" text-anchor="end" font-size="17" font-weight="700" fill="#0f1f19">' + Math.round(c.pct) + '% · ' + money0(c.sum) + '</text>';
+      g += '<rect x="330" y="' + (y - 14) + '" width="16" height="16" rx="4" fill="' + c.color + '"/><text x="356" y="' + y + '" font-size="17" fill="#1C1C1E">' + c.emoji + ' ' + esc(c.label) + '</text><text x="' + (W - 12) + '" y="' + y + '" text-anchor="end" font-size="17" font-weight="700" fill="#1C1C1E">' + Math.round(c.pct) + '% · ' + money0(c.sum) + '</text>';
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="' + FF + '"><rect width="' + W + '" height="' + H + '" fill="#fff"/>' + g + '</svg>';
   }
@@ -139,18 +139,18 @@
   }
 
   /* ---------- PDF ---------- */
-  var CSS = '#rpt{position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#0f1f19;font-family:' + FF + ';font-size:15px}' +
+  var CSS = '#rpt{position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#1C1C1E;font-family:' + FF + ';font-size:15px}' +
     '#rpt *{box-sizing:border-box;margin:0}#rpt .rs{width:794px;padding:0 40px;background:#fff}' +
-    '#rpt .hd{position:static;height:auto;top:auto;background:linear-gradient(135deg,#0b8a5f,#10b981);color:#fff;padding:30px 40px 26px;display:flex;gap:22px;align-items:center}' +
+    '#rpt .hd{position:static;height:auto;top:auto;background:linear-gradient(135deg,#5B3BD6,#8B6DFF);color:#fff;padding:30px 40px 26px;display:flex;gap:22px;align-items:center}' +
     '#rpt .hd img.rlg{height:92px;width:auto;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.25)}#rpt .hd h1{font-size:34px;font-weight:800;line-height:1.1}#rpt .hd p{opacity:.92;margin-top:6px;font-size:16px}' +
-    '#rpt .h2{font-size:21px;font-weight:800;margin:22px 0 12px;color:#0b8a5f;display:flex;align-items:center;gap:8px}' +
-    '#rpt .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}#rpt .kp div{background:#eef7f3;border-radius:16px;padding:14px 16px}#rpt .kp small{display:block;color:#6b7f76;font-size:12px}#rpt .kp b{display:block;font-size:22px;font-weight:800;color:#0b8a5f;margin-top:3px}' +
+    '#rpt .h2{font-size:21px;font-weight:800;margin:22px 0 12px;color:#5B3BD6;display:flex;align-items:center;gap:8px}' +
+    '#rpt .kp{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}#rpt .kp div{background:#F2F2F7;border-radius:16px;padding:14px 16px}#rpt .kp small{display:block;color:#6C6C70;font-size:12px}#rpt .kp b{display:block;font-size:22px;font-weight:800;color:#5B3BD6;margin-top:3px}' +
     '#rpt .cp{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px}#rpt .cp img{width:100%;height:170px;object-fit:cover;border-radius:16px}#rpt .cp.one{grid-template-columns:1fr}#rpt .cp.one img{height:330px}' +
-    '#rpt .ig{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 18px;margin-top:16px}#rpt .ig div{border-bottom:1px solid #e3eee9;padding:6px 0}#rpt .ig small{color:#6b7f76;font-size:12px;display:block}#rpt .ig b{font-size:15px}' +
-    '#rpt .ch{border:1px solid #e3eee9;border-radius:18px;padding:12px;background:#fff}#rpt .ch img{width:100%;display:block}' +
-    '#rpt table{width:100%;border-collapse:collapse;font-size:12.5px}#rpt th{background:#0b8a5f;color:#fff;text-align:left;padding:8px 8px;font-weight:700}#rpt td{padding:7px 8px;border-bottom:1px solid #e3eee9;vertical-align:top}#rpt tr:nth-child(even) td{background:#f3faf7}#rpt td.n,#rpt th.n{text-align:right;white-space:nowrap}' +
-    '#rpt .ph{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}#rpt .ph figure{border:1px solid #e3eee9;border-radius:14px;overflow:hidden}#rpt .ph img{width:100%;height:165px;object-fit:cover;display:block}#rpt .ph figcaption{font-size:11.5px;padding:6px 8px;color:#374151}' +
-    '#rpt .tt{display:flex;justify-content:space-between;align-items:center;background:#0b8a5f;color:#fff;border-radius:16px;padding:14px 18px;margin-top:12px;font-size:17px;font-weight:700}';
+    '#rpt .ig{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 18px;margin-top:16px}#rpt .ig div{border-bottom:1px solid #E5E5EA;padding:6px 0}#rpt .ig small{color:#6C6C70;font-size:12px;display:block}#rpt .ig b{font-size:15px}' +
+    '#rpt .ch{border:1px solid #E5E5EA;border-radius:18px;padding:12px;background:#fff}#rpt .ch img{width:100%;display:block}' +
+    '#rpt table{width:100%;border-collapse:collapse;font-size:12.5px}#rpt th{background:#5B3BD6;color:#fff;text-align:left;padding:8px 8px;font-weight:700}#rpt td{padding:7px 8px;border-bottom:1px solid #E5E5EA;vertical-align:top}#rpt tr:nth-child(even) td{background:#F5F2FF}#rpt td.n,#rpt th.n{text-align:right;white-space:nowrap}' +
+    '#rpt .ph{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}#rpt .ph figure{border:1px solid #E5E5EA;border-radius:14px;overflow:hidden}#rpt .ph img{width:100%;height:165px;object-fit:cover;display:block}#rpt .ph figcaption{font-size:11.5px;padding:6px 8px;color:#374151}' +
+    '#rpt .tt{display:flex;justify-content:space-between;align-items:center;background:#5B3BD6;color:#fff;border-radius:16px;padding:14px 18px;margin-top:12px;font-size:17px;font-weight:700}';
   function kp(l, v) { return '<div><small>' + esc(T(l)) + '</small><b>' + v + '</b></div>'; }
   function pdfBlocks(R, C, P, rowsData) {
     var B = [], c0 = R.cars[0], multi = R.cars.length > 1;
@@ -185,7 +185,7 @@
     for (var i = 0; i < rowsData.length; i += per) {
       var chunk = rowsData.slice(i, i + per);
       B.push('<div class="rs">' + (i === 0 ? '<div class="h2">📋 ' + esc(T('История событий')) + '</div>' : '') + '<table><tr><th>' + esc(T('Дата')) + '</th>' + (multi ? '<th>' + esc(T('Авто')) + '</th>' : '') + '<th>' + esc(T('Событие')) + '</th><th class="n">' + esc(T('Пробег')) + '</th><th class="n">' + esc(T('Стоимость')) + '</th></tr>' +
-        chunk.map(function (r) { return '<tr><td>' + A.fmtD(r.date) + '</td>' + (multi ? '<td>' + esc(r.car) + '</td>' : '') + '<td>' + r.emoji + ' <b>' + esc(r.title) + '</b>' + (r.det ? '<div style="color:#6b7f76;font-size:11px;margin-top:2px">' + esc(r.det.slice(0, 160)) + '</div>' : '') + '</td><td class="n">' + (r.km ? A.fmtN(r.km) : '') + '</td><td class="n">' + (r.cost ? A.money(r.cost) : '') + '</td></tr>'; }).join('') + '</table></div>');
+        chunk.map(function (r) { return '<tr><td>' + A.fmtD(r.date) + '</td>' + (multi ? '<td>' + esc(r.car) + '</td>' : '') + '<td>' + r.emoji + ' <b>' + esc(r.title) + '</b>' + (r.det ? '<div style="color:#6C6C70;font-size:11px;margin-top:2px">' + esc(r.det.slice(0, 160)) + '</div>' : '') + '</td><td class="n">' + (r.km ? A.fmtN(r.km) : '') + '</td><td class="n">' + (r.cost ? A.money(r.cost) : '') + '</td></tr>'; }).join('') + '</table></div>');
     }
     B.push('<div class="rs"><div class="tt"><span>' + esc(T('Итого')) + ' · ' + R.evs.length + ' ' + esc(T('записей')) + '</span><span>' + A.money(R.total) + '</span></div></div>');
     // фото

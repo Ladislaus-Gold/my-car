@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.0.28';
+  var VERSION = '2.1.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -415,7 +415,7 @@
   function applyTheme() {
     var t = pref('theme', 'auto'), dark = t === 'dark' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    var m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', dark ? '#0d1612' : '#edf7f2');
+    var m = document.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', dark ? '#000000' : '#F2F2F7');
   }
   try { if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
   function setupHtml() {
@@ -677,7 +677,7 @@
   var EMO = { repair: '🔧', to: '⚙️', diag: '🔍', mileage: '🧭', insurance: '🛡️', fuel: '⛽', wash: '🚿', tire: '🛞', charge: '🔋', fine: '🚨', other: '📌' };
   var PKC = { repair: '#ef4444', to: '#3b82f6', diag: '#a855f7', mileage: '#6b7280', insurance: '#f59e0b', fuel: '#22c55e', wash: '#06b6d4', tire: '#f97316', charge: '#16a34a', fine: '#e11d48', other: '#6b7280' };
   var catI = function (k, sz) { return '<span class="emo" style="font-size:' + (sz || 22) + 'px">' + (EMO[k.id] || '📌') + '</span>'; };
-  var EMB = ['#0e9f6e', '#0ea5e9', '#ef4444', '#16a34a', '#f59e0b', '#0f172a', '#db2777', '#0d9488'];
+  var EMB = ['#7C5CFF', '#0ea5e9', '#ef4444', '#16a34a', '#f59e0b', '#0f172a', '#db2777', '#0d9488'];
   function emblem(c) {
     var b = String(c.brand || '?'), h = 0; for (var i = 0; i < b.length; i++) h = (h * 31 + b.charCodeAt(i)) % 997;
     return '<span class="emb" style="--ec:' + EMB[h % EMB.length] + '"><i>' + esc(b.charAt(0).toUpperCase()) + '</i></span>';
@@ -1394,7 +1394,7 @@
       var mn = Math.min.apply(null, pts.map(function (p) { return p.m; })), mx = Math.max.apply(null, pts.map(function (p) { return p.m; })), t0 = new Date(pts[0].d).getTime(), t1 = new Date(pts[pts.length - 1].d).getTime() || 1, W2 = 340, H2 = 140, pl = 10, pr = 10, pt = 14, pb = 26;
       var px = function (p) { return pl + (t1 === t0 ? 0 : (new Date(p.d).getTime() - t0) / (t1 - t0)) * (W2 - pl - pr); }, py = function (p) { return pt + (H2 - pt - pb) * (1 - (mx === mn ? 0.5 : (p.m - mn) / (mx - mn))); };
       var pathD = pts.map(function (p, i) { return (i ? 'L' : 'M') + px(p).toFixed(1) + ' ' + py(p).toFixed(1); }).join(' ');
-      mileChart = '<svg class="chart" viewBox="0 0 ' + W2 + ' ' + H2 + '"><path d="' + pathD + ' L' + px(pts[pts.length - 1]).toFixed(1) + ' ' + (H2 - pb) + ' L' + px(pts[0]).toFixed(1) + ' ' + (H2 - pb) + 'Z" fill="#0e9f6e" opacity=".12"/><path d="' + pathD + '" fill="none" stroke="#0e9f6e" stroke-width="3" stroke-linejoin="round"/>' + pts.map(function (p) { return '<circle cx="' + px(p).toFixed(1) + '" cy="' + py(p).toFixed(1) + '" r="3.5" fill="#0e9f6e"/>'; }).join('') +
+      mileChart = '<svg class="chart" viewBox="0 0 ' + W2 + ' ' + H2 + '"><path d="' + pathD + ' L' + px(pts[pts.length - 1]).toFixed(1) + ' ' + (H2 - pb) + ' L' + px(pts[0]).toFixed(1) + ' ' + (H2 - pb) + 'Z" fill="#7C5CFF" opacity=".12"/><path d="' + pathD + '" fill="none" stroke="#7C5CFF" stroke-width="3" stroke-linejoin="round"/>' + pts.map(function (p) { return '<circle cx="' + px(p).toFixed(1) + '" cy="' + py(p).toFixed(1) + '" r="3.5" fill="#7C5CFF"/>'; }).join('') +
         '<text x="' + pl + '" y="' + (H2 - 6) + '">' + fmtD(pts[0].d) + ' · ' + fmtN(pts[0].m) + '</text><text x="' + (W2 - pr) + '" y="' + (H2 - 6) + '" text-anchor="end">' + fmtD(pts[pts.length - 1].d) + ' · ' + fmtN(pts[pts.length - 1].m) + '</text></svg>';
     }
     var top = evs.filter(function (e) { return S.costOf(e) > 0; }).sort(function (a, b) { return S.costOf(b) - S.costOf(a); }).slice(0, 5);
