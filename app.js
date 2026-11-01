@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.1.1';
+  var VERSION = '2.2.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -304,10 +304,11 @@
   }
   function toast(t) {
     $$('.toast').forEach(function (o) { o.remove(); });
-    var el = document.createElement('div');
-    el.className = 'toast'; el.textContent = t; document.body.appendChild(el);
+    var el = document.createElement('div'), bad = /не удалось|ошибк|неверн|нельзя|введите|укажите|не найден/i.test(t);
+    el.className = 'toast' + (bad ? ' bad' : '');
+    el.innerHTML = '<i>' + I(bad ? 'x' : 'check', 18) + '</i><span></span>'; el.lastChild.textContent = t; document.body.appendChild(el);
     setTimeout(function () { el.classList.add('show'); }, 10);
-    setTimeout(function () { el.classList.remove('show'); setTimeout(function () { el.remove(); }, 300); }, 2400);
+    setTimeout(function () { el.classList.remove('show'); setTimeout(function () { el.remove(); }, 300); }, 2600);
   }
   /* ---------- версія, оновлення, статуси ---------- */
   function newer(a, b) {
@@ -446,16 +447,22 @@
     app.onchange = function (e) { if (!common(e, 'change') && h.change) h.change(e); };
   }
   function sheet(title, items) {
-    layer.innerHTML = '<div class="ov"><div class="sheet"><div class="grab"></div>' + (title ? '<h4>' + esc(title) + '</h4>' : '') +
-      items.map(function (it, i) { return '<button class="si ' + (it.danger ? 'danger' : '') + '" data-i="' + i + '">' + (it.icon ? I(it.icon, 22) : '') + '<span>' + esc(it.label) + '</span></button>'; }).join('') +
-      '<button class="si cancel">Отмена</button></div></div>';
+    layer.innerHTML = '<div class="ov"><div class="as"><div class="asg">' + (title ? '<div class="ast">' + esc(title) + '</div>' : '') +
+      items.map(function (it, i) { return '<button class="si ' + (it.danger ? 'danger' : '') + '" data-i="' + i + '">' + (it.icon ? '<i>' + I(it.icon, 20) + '</i>' : '') + '<span>' + esc(it.label) + '</span></button>'; }).join('') +
+      '</div><button class="asc cancel">Отмена</button></div></div>';
     layer.onclick = function (e) {
       var b = e.target.closest('[data-i]');
       if (b) { var it = items[+b.dataset.i]; closeLayer(); if (it.fn) it.fn(); return; }
       if (e.target.classList.contains('ov') || e.target.closest('.cancel')) closeLayer();
     };
   }
-  function confirmDel(text, label, fn) { sheet(text, [{ label: label, icon: 'trash', danger: 1, fn: fn }]); }
+  function confirmDel(text, label, fn) {
+    layer.innerHTML = '<div class="ov mid"><div class="alert"><h3>' + esc(text) + '</h3><p>Это действие нельзя отменить.</p><div class="abt"><button class="cancel">Отмена</button><button class="dg" id="adg">' + esc(label) + '</button></div></div></div>';
+    layer.onclick = function (e) {
+      if (e.target.closest('#adg')) { closeLayer(); fn(); return; }
+      if (e.target.classList.contains('ov') || e.target.closest('.cancel')) closeLayer();
+    };
+  }
 
   /* ---------- спільні обробники (маски, вкладення) ---------- */
   /* ---------- Калькулятор для сумм ---------- */

@@ -723,3 +723,31 @@ html[data-theme=dark] .rg-note{color:var(--p)}html[data-theme=dark] .rg-note.war
 .tabadd svg{width:30px;height:30px;stroke-width:2.2}
 .tabadd:active{transform:scale(.93)}
 .fab{display:none}
+
+/* v2.2.0: окна в стиле iOS */
+.ov.mid{align-items:center}
+.as{width:100%;max-width:480px;padding:0 8px calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;animation:up .22s ease-out}
+.asg{background:rgba(247,247,250,.94);-webkit-backdrop-filter:saturate(180%) blur(30px);backdrop-filter:saturate(180%) blur(30px);border-radius:18px;overflow:hidden;max-height:70dvh;overflow-y:auto}
+html[data-theme=dark] .asg{background:rgba(44,44,46,.94)}
+.ast{text-align:center;padding:14px 16px 11px;font-size:13px;font-weight:600;color:var(--mut);border-bottom:.5px solid var(--line)}
+.asg .si{position:relative;height:58px;border-radius:0;font-size:19px;gap:12px;padding:0 16px;color:var(--ink)}
+.asg .si+.si:before{content:"";position:absolute;top:0;left:16px;right:0;height:.5px;background:var(--line)}
+.asg .si i{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--tint);color:var(--p);flex:none}
+.asg .si i svg{width:19px;height:19px}
+.asg .si.danger{color:var(--red)}.asg .si.danger i{background:rgba(255,59,48,.14);color:var(--red)}
+.asc{height:58px;border:0;border-radius:18px;background:var(--w);color:var(--p);font-size:19px;font-weight:600;cursor:pointer}
+.asc:active{opacity:.6}
+.alert{width:min(290px,calc(100% - 60px));background:rgba(247,247,250,.96);-webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);border-radius:20px;text-align:center;overflow:hidden;animation:pop .2s ease-out}
+html[data-theme=dark] .alert{background:rgba(44,44,46,.96)}
+@keyframes pop{from{transform:scale(1.08);opacity:0}}
+.alert h3{font-size:18px;font-weight:600;padding:22px 18px 6px;line-height:1.25}
+.alert p{font-size:14px;color:var(--mut);padding:0 20px 20px}
+.abt{display:flex;border-top:.5px solid var(--line)}
+.abt button{flex:1;height:50px;border:0;background:none;font-size:18px;color:var(--p);cursor:pointer}
+.abt button+button{border-left:.5px solid var(--line);font-weight:600}
+.abt .dg{color:var(--red)}.abt button:active{background:var(--sur)}
+.toast{top:calc(12px + env(safe-area-inset-top));bottom:auto;transform:translate(-50%,-20px);display:flex;align-items:center;gap:10px;padding:9px 20px 9px 10px;border-radius:30px;font-size:15px;font-weight:600;text-align:left;width:max-content}
+.toast.show{transform:translate(-50%,0)}
+.toast i{width:26px;height:26px;border-radius:50%;background:#34C759;display:grid;place-items:center;flex:none}
+.toast.bad i{background:#FF3B30}.toast i svg{width:16px;height:16px;stroke-width:3}
+.sheet{border-radius:28px 28px 0 0}.sheet h4{text-align:center;font-size:17px;font-weight:600;letter-spacing:0;margin:2px 0 12px}
