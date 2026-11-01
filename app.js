@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.1.0';
+  var VERSION = '2.3.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -304,10 +304,11 @@
   }
   function toast(t) {
     $$('.toast').forEach(function (o) { o.remove(); });
-    var el = document.createElement('div');
-    el.className = 'toast'; el.textContent = t; document.body.appendChild(el);
+    var el = document.createElement('div'), bad = /не удалось|ошибк|неверн|нельзя|введите|укажите|не найден/i.test(t);
+    el.className = 'toast' + (bad ? ' bad' : '');
+    el.innerHTML = '<i>' + I(bad ? 'x' : 'check', 18) + '</i><span></span>'; el.lastChild.textContent = t; document.body.appendChild(el);
     setTimeout(function () { el.classList.add('show'); }, 10);
-    setTimeout(function () { el.classList.remove('show'); setTimeout(function () { el.remove(); }, 300); }, 2400);
+    setTimeout(function () { el.classList.remove('show'); setTimeout(function () { el.remove(); }, 300); }, 2600);
   }
   /* ---------- версія, оновлення, статуси ---------- */
   function newer(a, b) {
@@ -428,7 +429,9 @@
   }
   function tabbar(a) {
     var T = [['garage', 'Гараж', 'carfront'], ['upcoming', 'События', 'calcheck'], ['analytics', 'Аналитика', 'chart'], ['profile', 'Профиль', 'user']];
-    return '<nav class="tabbar">' + T.map(function (t) { return '<a class="tab ' + (a === t[0] ? 'on' : '') + '" href="#/' + t[0] + '">' + I(t[2], 24) + '<span>' + t[1] + '</span></a>'; }).join('') + '</nav>';
+    var h = T.map(function (t) { return '<a class="tab ' + (a === t[0] ? 'on' : '') + '" href="#/' + t[0] + '">' + I(t[2], 24) + '<span>' + t[1] + '</span></a>'; });
+    h.splice(2, 0, '<button class="tabadd" id="tabadd" aria-label="Добавить запись">' + I('plus', 30) + '</button>');
+    return '<nav class="tabbar">' + h.join('') + '</nav>';
   }
   function page(o) {
     var right = o.right !== undefined ? o.right : '';
@@ -444,16 +447,22 @@
     app.onchange = function (e) { if (!common(e, 'change') && h.change) h.change(e); };
   }
   function sheet(title, items) {
-    layer.innerHTML = '<div class="ov"><div class="sheet"><div class="grab"></div>' + (title ? '<h4>' + esc(title) + '</h4>' : '') +
-      items.map(function (it, i) { return '<button class="si ' + (it.danger ? 'danger' : '') + '" data-i="' + i + '">' + (it.icon ? I(it.icon, 22) : '') + '<span>' + esc(it.label) + '</span></button>'; }).join('') +
-      '<button class="si cancel">Отмена</button></div></div>';
+    layer.innerHTML = '<div class="ov"><div class="as"><div class="asg">' + (title ? '<div class="ast">' + esc(title) + '</div>' : '') +
+      items.map(function (it, i) { return '<button class="si ' + (it.danger ? 'danger' : '') + '" data-i="' + i + '">' + (it.icon ? '<i>' + I(it.icon, 20) + '</i>' : '') + '<span>' + esc(it.label) + '</span></button>'; }).join('') +
+      '</div><button class="asc cancel">Отмена</button></div></div>';
     layer.onclick = function (e) {
       var b = e.target.closest('[data-i]');
       if (b) { var it = items[+b.dataset.i]; closeLayer(); if (it.fn) it.fn(); return; }
       if (e.target.classList.contains('ov') || e.target.closest('.cancel')) closeLayer();
     };
   }
-  function confirmDel(text, label, fn) { sheet(text, [{ label: label, icon: 'trash', danger: 1, fn: fn }]); }
+  function confirmDel(text, label, fn) {
+    layer.innerHTML = '<div class="ov mid"><div class="alert"><h3>' + esc(text) + '</h3><p>Это действие нельзя отменить.</p><div class="abt"><button class="cancel">Отмена</button><button class="dg" id="adg">' + esc(label) + '</button></div></div></div>';
+    layer.onclick = function (e) {
+      if (e.target.closest('#adg')) { closeLayer(); fn(); return; }
+      if (e.target.classList.contains('ov') || e.target.closest('.cancel')) closeLayer();
+    };
+  }
 
   /* ---------- спільні обробники (маски, вкладення) ---------- */
   /* ---------- Калькулятор для сумм ---------- */
@@ -868,7 +877,7 @@
       title: 'Мой гараж', left: true, nav: 'garage',
       body: (hasNew() ? banner() : '') + garageAlerts() + '<div class="seg">' + seg.map(function (s) { return '<button data-tab="' + s[0] + '" class="' + (ui.tab === s[0] ? 'on' : '') + '">' + s[1] + '</button>'; }).join('') + '</div>' +
         '<div class="searchrow"><label class="search">' + I('search', 28) + '<input id="q" placeholder="Поиск авто" value="' + esc(ui.q) + '" autocomplete="off"></label><button class="sq" id="view" aria-label="Вид">' + I('grid', 26) + '</button></div><div id="cars"></div>' +
-        (ui.tab === 'my' ? '<button class="fab" id="add" aria-label="Добавить запись">' + I('plus', 34) + '</button>' : '')
+        ''
     });
     var draw = function () {
       var arch = ui.tab === 'arch', q = ui.q.trim().toLowerCase();
@@ -899,6 +908,7 @@
       change: function (e) { var d = e.target.dataset && e.target.dataset.gpd; if (d && e.target.value) { var o = grange('custom'); o[d === 'gpf' ? 'from' : 'to'] = e.target.value; if (o.from > o.to) { var x = o.from; o.from = o.to; o.to = x; } setPref('gpf', o.from); setPref('gpt', o.to); draw(); } }
     });
   }
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#tabadd')) { e.preventDefault(); addRecordMenu(); } });
   function addRecordMenu() {
     var cars = S.cars(false);
     if (!cars.length) return go('#/car/new');
@@ -1088,6 +1098,17 @@
     }
     page({ title: (EV && !rep ? 'Изменить: ' : '') + k.label + ' (' + carName(c) + ')', back: '#/car/' + id, body: '<form id="f" data-cat="' + cat + '" novalidate>' + body + '</form>', footer: '<button class="btn primary" id="save" type="button">Сохранить</button>' });
     if (EV) prefillEvent(EV, cat, sch, rep);
+    (function () {
+      var ff = $('#f'), mb = function () { return ff.querySelector('[name=cost]') || ff.querySelector('[name=amount]') || ff.querySelector('[name=total]'); };
+      var chips = EV ? '' : '<div class="rchips">' + M.CATS.map(function (x) { return '<button type="button" data-rc="' + x.id + '" class="' + (x.id === cat ? 'on' : '') + '">' + x.label + '</button>'; }).join('') + '</div>';
+      var big = mb() ? '<div class="bigamt" id="bigamt"><small>Сумма</small><b><span id="bigv">0</span> <u>₴</u></b></div>' : '';
+      $('.body').insertAdjacentHTML('afterbegin', big + chips);
+      var upd = function () { var m = mb(), v = m ? parseFloat(String(m.value).replace(/\s/g, '').replace(',', '.')) : 0, el = $('#bigv'); if (el) el.textContent = v > 0 ? fmtN(v) : '0'; };
+      var rc = $('.rchips'), on = rc && rc.querySelector('.on'); if (on) rc.scrollLeft = on.offsetLeft - 18;
+      upd(); ff.addEventListener('input', upd); ff.addEventListener('change', upd);
+      var ba = $('#bigamt'); if (ba) ba.onclick = function () { var m = mb(); if (m) { m.scrollIntoView({ block: 'center' }); m.focus(); } };
+      $$('[data-rc]').forEach(function (b) { b.onclick = function () { if (b.dataset.rc !== cat) location.replace('#/car/' + id + '/record/' + b.dataset.rc); }; });
+    })();
     if (rep) toast('Данные из прошлой записи — проверьте и дополните');
     setH({
       click: function (e) {
