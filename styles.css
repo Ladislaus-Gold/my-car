@@ -845,3 +845,23 @@ html[data-theme=dark] .mini button.on{background:#636366}
 .stat{border-radius:14px}
 .al{border-radius:0;box-shadow:none}
 .cell{border-radius:14px}
+
+/* ===== iOS, этап 3: События, История, Аналитика ===== */
+.btn{height:50px;border-radius:12px;font-size:17px}
+.btn.primary{background:var(--p);box-shadow:none}
+.btn.outline,.btn.danger{height:50px;border:0;background:var(--w);font-size:17px}
+.btn.outline{color:var(--p)}
+.btn+.btn{margin-top:10px}
+.pills{display:flex;flex-wrap:nowrap;gap:0;margin:14px 0;padding:2px;background:var(--sur);border-radius:9px}
+.pills button{flex:1;min-width:0;height:32px;padding:0 4px;border-radius:7px;background:none;font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pills button.on{background:var(--w);color:var(--ink);font-weight:600;box-shadow:0 3px 8px rgba(0,0,0,.12),0 1px 1px rgba(0,0,0,.04)}
+html[data-theme=dark] .pills button.on{background:#636366}
+.dbadge{width:44px;height:44px;border-radius:10px}
+.dbadge b{font-size:18px}.dbadge small{font-size:10px}
+.upcar>.car{border-radius:14px}
+.rem .evi,.ev .evi{width:36px;height:36px;border-radius:8px}
+.ev b,.rem b,.al b{font-weight:400;font-size:17px}
+.ev .evs{font-weight:500}
+.totbar,.tot{border-radius:14px}
+.sumc,.chart,.card .stat{border-radius:14px}
+.bars,.track{border-radius:99px}
