@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.3.0';
+  var VERSION = '2.4.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -727,11 +727,13 @@
     return '<div class="mini ' + (cls || '') + '" data-gps>' + PERS.map(function (p) { return '<button data-gp="' + p[0] + '" class="' + (per === p[0] ? 'on' : '') + '">' + p[1] + '</button>'; }).join('') + '</div>' +
       (per === 'custom' ? '<div class="rng gpr" data-gps><label>С<input type="date" class="inp" data-gpd="gpf" value="' + g.from + '" max="' + today() + '"></label><label>По<input type="date" class="inp" data-gpd="gpt" value="' + g.to + '" max="' + today() + '"></label></div>' : '');
   }
+  var LIC = { repair: 'wrench', to: 'cog', diag: 'search', mileage: 'gauge', insurance: 'shield', fuel: 'fuel', wash: 'wash', tire: 'tire', charge: 'charge', fine: 'alert', other: 'pin' };
   function catBar(r) {
     var ks = M.CATS.filter(function (k) { return r.cats[k.id] > 0; }).sort(function (a, b) { return r.cats[b.id] - r.cats[a.id]; });
     if (!ks.length || !r.sum) return '';
-    return '<div class="bars">' + ks.map(function (k) { return '<i style="width:' + (r.cats[k.id] / r.sum * 100) + '%;background:' + CCOL[k.id] + '"></i>'; }).join('') + '</div><div class="lgx">' +
-      ks.slice(0, 5).map(function (k) { return '<span><i style="background:' + CCOL[k.id] + '"></i>' + catI(k, 14) + ' ' + Math.round(r.cats[k.id] / r.sum * 100) + '%</span>'; }).join('') + '</div>';
+    var VP = ['#5B3BD6', '#7C5CFF', '#A58BFF', '#C9BBFF', '#E0D8FF'], vc = function (i) { return VP[Math.min(i, VP.length - 1)]; };
+    return '<div class="bars">' + ks.map(function (k, i) { return '<i style="width:' + (r.cats[k.id] / r.sum * 100) + '%;background:' + vc(i) + '"></i>'; }).join('') + '</div><div class="lgx">' +
+      ks.slice(0, 5).map(function (k, i) { return '<span><i style="background:' + vc(i) + '"></i>' + I(LIC[k.id] || 'pin', 14) + ' ' + Math.round(r.cats[k.id] / r.sum * 100) + '%</span>'; }).join('') + '</div>';
   }
   function deltaHtml(r) {
     if (r.delta === null) return '';
@@ -748,22 +750,43 @@
     });
     return best;
   }
+  function countUp(el) {
+    var txt = el.textContent, m = /\d[\d\s\u00a0]*/.exec(txt);
+    if (!m || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    var num = parseInt(m[0].replace(/\s|\u00a0/g, ''), 10); if (!(num > 0)) return;
+    var t0 = null;
+    (function step(ts) {
+      if (t0 === null) t0 = ts;
+      var k = Math.min(1, (ts - t0) / 700), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = k < 1 ? txt.replace(m[0], fmtN(Math.round(num * e)) + ' ') : txt;
+      if (k < 1 && document.body.contains(el)) requestAnimationFrame(step);
+    })(performance.now());
+  }
+  function emptyState(ic, t, p, label, href, rec) {
+    return '<div class="emp"><div class="eic">' + I(ic, 54) + '</div><h3>' + esc(t) + '</h3><p>' + esc(p) + '</p>' + (rec ? '<button class="ebtn" data-addrec>' + esc(label) + '</button>' : '<a class="ebtn" href="' + href + '">' + esc(label) + '</a>') + '</div>';
+  }
+  function nowBlock(c) {
+    var n = window.MCREG && MCREG.next ? MCREG.next(c) : null;
+    if (!n) return '';
+    if (n.none) return '<a class="now" href="#/car/' + c.id + '/regulation"><div class="nr"><i>' + I('calcheck', 22) + '</i><div><b>Сейчас важно</b><small>Укажите прошлые замены, и я покажу ближайшее ТО</small></div><u>›</u></div></a>';
+    return '<a class="now' + (n.st === 'over' ? ' late' : '') + '" href="#/car/' + c.id + '/regulation"><div class="nr"><i>' + I('wrench', 22) + '</i><div><b>' + esc(n.title) + '</b><small>' + esc(n.text) + '</small></div><u>›</u></div><div class="pg"><i style="width:' + Math.round(n.pct * 100) + '%"></i></div></a>';
+  }
   function carBig(c) {
     var per = gper(), r = spendIn([c.id], per), evs = S.events(c.id), photo = c.photos && c.photos[0];
     var dist = distIn([c.id], r.from, r.to), fa = fuelAvg(c.id), nr = nextRem(c.id);
     var lastTo = evs.filter(function (e) { return e.category === 'to'; }).sort(function (a, b) { return b.date.localeCompare(a.date); })[0];
     var ins = evs.filter(function (e) { return e.category === 'insurance' && (e.data || {}).end; }).sort(function (a, b) { return b.data.end.localeCompare(a.data.end); })[0];
-    var cell = function (ic, l, v, bad, key) { return '<div class="cell' + (bad ? ' bad' : '') + (key && ui.gcat === key ? ' sel' : '') + '" ' + (key === 'up' ? 'data-gup' : key ? 'data-gcat="' + key + '"' : 'data-gnone') + '><small>' + ic + ' ' + l + '</small><b>' + v + '</b></div>'; };
+    var cell = function (ic, l, v, bad, key, hint, col) { return '<div class="cell' + (bad ? ' bad' : '') + (key && ui.gcat === key ? ' sel' : '') + '" ' + (key === 'up' ? 'data-gup' : key ? 'data-gcat="' + key + '"' : 'data-gnone') + '><i class="ci" style="background:' + (col || '#7C5CFF') + '">' + I(ic, 16) + '</i><small>' + l + '</small><b>' + v + '</b>' + (hint ? '<u>' + hint + '</u>' : '') + '</div>'; };
     var sub = [c.alias, c.plate, c.body, c.color].filter(Boolean).join(' · ');
     var eg = [c.engine ? c.engine + ' л' : '', c.gear].filter(Boolean).join(' · ');
     return '<article class="car big" data-id="' + c.id + '"><div class="bph' + (photo ? ' hasp' : '') + '">' + (photo ? '<img src="' + photo + '" alt="">' : '<span class="hdeco">' + I('carfront', 190) + '</span>') +
       '<div class="btop">' + '<span class="hyr">' + esc(c.year) + '</span>' + (c.fuel ? '<span class="hyr">⛽ ' + esc(c.fuel) + '</span>' : '') + '<button class="kebab" data-menu="' + c.id + '" aria-label="Меню">' + I('more', 22) + '</button></div>' +
       '<div class="bnm"><h3>' + esc(carName(c)) + '</h3><p>' + esc(sub || 'Ваш автомобиль') + '</p></div></div>' +
-      '<div class="bbd"><div class="sp"><div><small>Расходы ' + PERN[per] + '</small><b>' + money(r.sum).replace('.00', '') + '</b></div>' + deltaHtml(r) + '</div>' + perSeg(per) + catBar(r) +
-      '<div class="grid">' + cell('🧭', 'Пробег', fmtN(S.curMileage(c.id)) + ' ' + unit(c), 0, 'mileage') + cell('⛽', 'Средний расход', fa ? fa.toFixed(1).replace('.', ',') + ' л/100 км' : '—', 0, 'fuel') +
-      cell('⚙️', 'Двигатель · КПП', esc(eg) || '—') + cell('💰', 'Стоимость 1 км', dist > 0 && r.sum ? money(r.sum / dist) : '—') +
-      cell('🛠️', 'Последнее ТО', lastTo ? fmtD(lastTo.date) : '—', 0, 'to') + cell('📅', nr ? esc(nr.title.length > 18 ? nr.title.slice(0, 17) + '…' : nr.title) : 'Следующее', nr ? nr.txt : '—', nr && nr.late, 'up') +
-      cell('🛡️', 'Страховка до', ins ? fmtD(ins.data.end) : '—', ins && ins.data.end < today(), 'insurance') + cell('🧾', 'Записей', evs.length, 0, 'all') + '</div>' +
+      '<div class="bbd">' + nowBlock(c) + '<div class="sp"><div><small>Расходы ' + PERN[per] + '</small><b>' + money(r.sum).replace('.00', '') + '</b></div>' + deltaHtml(r) + '</div>' + perSeg(per) + catBar(r) +
+      '<div class="grid">' + cell('gauge', 'Пробег', fmtN(S.curMileage(c.id)) + ' ' + unit(c), 0, 'mileage', '', '#7C5CFF') + cell('fuel', 'Средний расход', fa ? fa.toFixed(1).replace('.', ',') + ' л/100 км' : '—', 0, 'fuel', fa ? '' : 'нужно 2 заправки', '#8E8E93') +
+      cell('cog', 'Двигатель · КПП', esc(eg) || '—', 0, 0, '', '#5B3BD6') + cell('coin', 'Стоимость 1 км', dist > 0 && r.sum ? money(r.sum / dist) : '—', 0, 0, dist > 0 && r.sum ? '' : 'нужно 2 записи с пробегом', '#30B0C7') +
+      cell('wrench', 'Последнее ТО', lastTo ? fmtD(lastTo.date) : '—', 0, 'to', '', '#34C759') + cell('calcheck', nr ? esc(nr.title) : 'Следующее', nr ? nr.txt : '—', nr && nr.late, 'up', '', '#FF9F0A') +
+      cell('shield', 'Страховка до', ins ? fmtD(ins.data.end) : '—', ins && ins.data.end < today(), 'insurance', '', '#0A84FF') + cell('doc', 'Записей', evs.length, 0, 'all', '', '#8E8E93') + '</div>' +
       '</div></article>';
   }
   function gcatList(c, per) {
@@ -887,6 +910,7 @@
         '<p class="empty">' + (arch ? 'Архив пуст' : q ? 'Ничего не найдено' : 'В гараже пока нет авто.<br>Нажмите «+ Добавить авто»') + '</p>';
     };
     draw();
+    $$('.sp b').forEach(countUp);
     setH({
       click: function (e) {
         var t = e.target, b;
@@ -908,7 +932,7 @@
       change: function (e) { var d = e.target.dataset && e.target.dataset.gpd; if (d && e.target.value) { var o = grange('custom'); o[d === 'gpf' ? 'from' : 'to'] = e.target.value; if (o.from > o.to) { var x = o.from; o.from = o.to; o.to = x; } setPref('gpf', o.from); setPref('gpt', o.to); draw(); } }
     });
   }
-  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#tabadd')) { e.preventDefault(); addRecordMenu(); } });
+  document.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('#tabadd,[data-addrec]')) { try { if (navigator.vibrate) navigator.vibrate(8); } catch (x) {} e.preventDefault(); addRecordMenu(); } });
   function addRecordMenu() {
     var cars = S.cars(false);
     if (!cars.length) return go('#/car/new');
@@ -1282,7 +1306,7 @@
   function upcoming() {
     var cars = S.cars(false);
     if (!cars.length) {
-      page({ title: 'События', left: true, nav: 'upcoming', body: '<div class="noev">' + I('calcheck', 64) + '<span>Сначала добавьте авто</span></div><a class="btn primary" href="#/car/new">' + I('plus', 24) + ' Добавить авто</a>' });
+      page({ title: 'События', left: true, nav: 'upcoming', body: emptyState('calcheck', 'Событий пока нет', 'Сначала добавьте авто, и здесь появятся напоминания о ТО, страховке и замене шин', 'Добавить авто', '#/car/new') });
       return setH({});
     }
     if (!cars.some(function (c) { return c.id === ui.upCar; })) ui.upCar = cars[0].id;
@@ -1313,7 +1337,7 @@
           if (r.date) { var d = days(r.date); late = d < 0; sub = fmtD(r.date) + ' · ' + (d < 0 ? 'просрочено на ' + (-d) + ' дн.' : d === 0 ? 'сегодня' : 'через ' + d + ' дн.'); }
           if (r.km) { var left = (r.base || 0) + r.km - S.curMileage(c.id); sub += (sub ? ' · ' : '') + 'до ' + fmtN((r.base || 0) + r.km) + ' ' + unit(c) + (left < 0 ? ' (превышено)' : ' (ещё ' + fmtN(left) + ' ' + unit(c) + ')'); late = late || left < 0; }
           return '<div class="rem" data-rmd="' + r.id + '"><span class="evi">' + I('calcheck', 22) + '</span><div class="evm"><b>' + esc(r.title) + '</b><small class="' + (late ? 'late' : '') + '">' + esc(sub) + '</small></div><button class="x" data-del="' + r.id + '" aria-label="Удалить">' + I('x', 22) + '</button></div>';
-        }).join('') : '<div class="noev">' + I('calcheck', 64) + '<span>Запланированных событий пока нет</span></div>') +
+        }).join('') : emptyState('calcheck', 'Событий пока нет', 'Здесь появятся напоминания о ТО, страховке и замене шин', 'Добавить запись', '', 1)) +
         '<a class="btn primary" style="margin-top:26px;height:62px" href="#/car/' + c.id + '/plan">' + I('plus', 24) + ' Запланировать событие</a><a class="btn outline" href="#/car/' + c.id + '/record">Добавить выполненную работу</a>'
     });
     setH({
@@ -1356,7 +1380,7 @@
     var CC = { repair: '#ef4444', to: '#3b82f6', diag: '#a855f7', insurance: '#f59e0b', fuel: '#22c55e', charge: '#14b8a6', wash: '#06b6d4', tire: '#f97316', fine: '#be123c', other: '#9ca3af' };
     var cars = S.cars(false);
     if (!cars.length) {
-      page({ title: 'Аналитика', left: true, nav: 'analytics', body: '<div class="noev">' + I('chart', 64) + '<span>Сначала добавьте авто</span></div><a class="btn primary" href="#/car/new">' + I('plus', 24) + ' Добавить авто</a>' });
+      page({ title: 'Аналитика', left: true, nav: 'analytics', body: emptyState('chart', 'Пока нечего считать', 'Добавьте авто и пару заправок, и появятся расходы, пробег и стоимость 1 км', 'Добавить авто', '#/car/new') });
       return setH({});
     }
     if (!ui.anCar || (ui.anCar !== 'all' && !S.car(ui.anCar))) ui.anCar = 'all';
