@@ -762,3 +762,34 @@ html[data-theme=dark] .alert{background:rgba(44,44,46,.96)}
 .rchips button{flex:none;border:0;border-radius:99px;padding:9px 16px;background:var(--w);color:var(--ink);font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .rchips button.on{background:var(--p);color:#fff}
 .foot .btn.primary{height:54px;border-radius:16px;font-size:17px;font-weight:600;background:linear-gradient(180deg,#9B80FF,#6246E0);box-shadow:0 10px 22px rgba(98,70,224,.35)}
+
+/* v2.4.0: визуальные улучшения */
+.cell{position:relative}
+.cell .ci{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;color:#fff;margin-bottom:6px}
+.cell .ci svg{width:16px;height:16px;stroke-width:2}
+.cell small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25;min-height:2.5em}
+.cell u{display:block;text-decoration:none;color:var(--mut);font-size:11.5px;margin-top:2px}
+.cell.sel .ci{background:rgba(255,255,255,.25)!important}.cell.sel u{color:rgba(255,255,255,.8)}
+.now{display:block;background:var(--sur);border-radius:20px;padding:12px 14px;margin-bottom:14px;color:inherit;text-decoration:none}
+.now .nr{display:flex;align-items:center;gap:12px}
+.now .nr>i{flex:none;width:40px;height:40px;border-radius:12px;background:var(--tint);color:var(--p);display:grid;place-items:center}
+.now .nr div{flex:1;min-width:0}.now .nr b{display:block;font-size:17px;font-weight:600}.now .nr small{color:var(--mut);font-size:13.5px}
+.now .nr u{text-decoration:none;color:var(--mut2);font-size:26px;line-height:1}
+.now .pg{height:6px;border-radius:3px;background:var(--tint);margin-top:10px;overflow:hidden}
+.now .pg i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#A58BFF,#7C5CFF);transform-origin:left;animation:fillx .8s ease-out}
+.now.late .nr>i{background:rgba(255,59,48,.14);color:var(--red)}.now.late .pg i{background:var(--red)}
+.emp{text-align:center;padding:70px 24px 40px}
+.eic{width:110px;height:110px;border-radius:32px;background:var(--tint);color:var(--p);display:grid;place-items:center;margin:0 auto 22px}
+.eic svg{width:54px;height:54px}
+.emp h3{font-size:22px;font-weight:700;margin-bottom:8px}.emp p{color:var(--mut);font-size:15.5px;line-height:1.4;margin-bottom:24px}
+.ebtn{display:inline-block;border:0;cursor:pointer;padding:14px 26px;border-radius:99px;background:linear-gradient(180deg,#9B80FF,#6246E0);color:#fff;font-size:17px;font-weight:600;text-decoration:none;box-shadow:0 10px 22px rgba(98,70,224,.35)}
+.ebtn:active{transform:scale(.96)}
+@keyframes fillx{from{transform:scaleX(0)}}
+@keyframes pgin{from{opacity:0;transform:translateY(8px)}}
+@keyframes cardin{from{opacity:0;transform:translateY(12px)}}
+.page .body{animation:pgin .25s ease-out}
+.cars>*,.body>.card,.body>.ev{animation:cardin .35s ease-out both}
+.cars>*:nth-child(2),.body>.card:nth-child(2){animation-delay:.04s}.cars>*:nth-child(3),.body>.card:nth-child(3){animation-delay:.08s}.cars>*:nth-child(4){animation-delay:.12s}
+.bars i{transform-origin:left;animation:fillx .7s ease-out}
+.tabadd:active{transform:scale(.93)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

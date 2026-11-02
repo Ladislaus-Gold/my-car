@@ -288,6 +288,12 @@
     [/^#\/car\/([^/]+)\/setup\/history$/, setupHistory],
     [/^#\/car\/([^/]+)\/setup\/result$/, setupResult]
   );
-  window.MCREG = { card: card, summary: summary, askText: askText, tplFor: tplFor, itemsOf: itemsOf, calc: calc };
-  if (/^#\/car\/[^/]+(\/(regulation|setup.*))?$/.test(location.hash)) A.render();
+  function next(c) {
+    var s = summary(c), ord = { over: 0, soon: 1, advice: 1, ok: 2 }, best = null;
+    s.rs.forEach(function (r) { if (r.st === 'unknown') return; var w = ord[r.st] * 10 - r.pct; if (!best || w < best.w) best = { w: w, r: r }; });
+    if (!best) return { none: 1 };
+    return { title: best.r.it.t, text: leftText(best.r), pct: Math.min(1, best.r.pct || 0), st: best.r.st };
+  }
+  window.MCREG = { next: next,  card: card, summary: summary, askText: askText, tplFor: tplFor, itemsOf: itemsOf, calc: calc };
+  if (/^(#\/?(garage)?)?$|^#\/car\/[^/]+(\/(regulation|setup.*))?$/.test(location.hash)) A.render();
 })();
