@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.4.0';
+  var VERSION = '2.5.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -728,6 +728,7 @@
       (per === 'custom' ? '<div class="rng gpr" data-gps><label>С<input type="date" class="inp" data-gpd="gpf" value="' + g.from + '" max="' + today() + '"></label><label>По<input type="date" class="inp" data-gpd="gpt" value="' + g.to + '" max="' + today() + '"></label></div>' : '');
   }
   var LIC = { repair: 'wrench', to: 'cog', diag: 'search', mileage: 'gauge', insurance: 'shield', fuel: 'fuel', wash: 'wash', tire: 'tire', charge: 'charge', fine: 'alert', other: 'pin' };
+  var LCOL = { repair: '#FF3B30', to: '#007AFF', diag: '#AF52DE', mileage: '#8E8E93', insurance: '#FF9F0A', fuel: '#34C759', wash: '#32ADE6', tire: '#FF9500', charge: '#30B0C7', fine: '#FF2D55', other: '#8E8E93' };
   function catBar(r) {
     var ks = M.CATS.filter(function (k) { return r.cats[k.id] > 0; }).sort(function (a, b) { return r.cats[b.id] - r.cats[a.id]; });
     if (!ks.length || !r.sum) return '';
@@ -954,12 +955,12 @@
   }
   function about(id) {
     var c = S.car(id); if (!c) return go('#/garage');
-    var per = gper(), gr = grange(per), evs = S.events(id).filter(function (e) { return (!gr.from || e.date >= gr.from) && e.date <= gr.to; });
+    var per = gper(), gr = grange(per), sp = spendIn([id], per), evs = S.events(id).filter(function (e) { return (!gr.from || e.date >= gr.from) && e.date <= gr.to; });
     page({
       title: 'Об авто', back: '#/garage', nav: 'garage', right: '<button class="link" id="acts">Действия с авто</button>',
-      body: carHero(c, true).replace('class="car hero', 'class="car hero static') + perSeg(per) + '<a class="btn primary" style="margin-top:8px;height:62px" href="#/car/' + id + '/record">' + I('plus', 26) + ' Добавить запись</a>' +
+      body: carHero(c, true).replace('class="car hero', 'class="car hero static') + perSeg(per) +
         (window.MCREG ? MCREG.card(c) : '') +
-        '<h2 class="h2">Категории событий</h2><div class="chips">' + M.CATS.map(function (k) { return '<a class="chip ' + k.cls + '" href="#/car/' + id + '/history/' + k.id + '">' + catI(k, 22) + '<span>' + k.label + '</span></a>'; }).join('') + '</div>' +
+        '<h2 class="h2">Категории событий</h2><div class="cgrp">' + M.CATS.map(function (k) { var v = sp.cats[k.id] || 0; return '<a class="crow" href="#/car/' + id + '/history/' + k.id + '"><i style="background:' + (LCOL[k.id] || '#8E8E93') + '">' + I(LIC[k.id] || 'pin', 19) + '</i><span>' + k.label + '</span><em>' + (v > 0 ? money(v).replace('.00', '') : '—') + '</em><u>›</u></a>'; }).join('') + '</div>' +
         '<div class="rowh"><h2 class="h2">История событий</h2><a class="link" href="#/car/' + id + '/history">Смотреть все</a></div>' +
         (evs.length ? evs.slice(0, 5).map(evRow).join('') : '<p class="empty">Событий пока нет</p>') + totalBar(evs, PERN[per])
     });
