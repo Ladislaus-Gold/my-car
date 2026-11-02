@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.5.0';
+  var VERSION = '2.5.1';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -1051,6 +1051,8 @@
   /* ---------- Создать запись ---------- */
   function recordPick(id) {
     var c = S.car(id); if (!c) return go('#/garage');
+    var lc = pref('lcat', 'fuel'); if (!M.SCHEMAS[lc]) lc = 'fuel';
+    return location.replace('#/car/' + id + '/record/' + lc);
     page({
       title: 'Создать запись', back: '#/car/' + id, dark: 1, right: '',
       body: '<div class="rhero' + (c.photos && c.photos[0] ? ' hasp' : '') + '">' + (c.photos && c.photos[0] ? '<img src="' + c.photos[0] + '" alt="">' : '<span class="hdeco">' + I('carfront', 150) + '</span>') +
@@ -1109,6 +1111,7 @@
       if (rep) { if (f.core && f.k === 'date') return today(); if (f.core && f.k === 'mileage') return ''; var v0 = (EV.data || {})[f.k]; return typeof v0 === 'string' && /^\d{4}-\d\d-\d\d$/.test(v0) ? undefined : v0; }
       return f.core && f.k === 'date' ? EV.date : f.core && f.k === 'mileage' ? (EV.mileage || '') : (EV.data || {})[f.k];
     };
+    if (!EV) setPref('lcat', cat);
     var k = M.cat(cat), sch = M.SCHEMAS[cat], body = '';
     if (sch.kind === 'works') {
       body = sch.head.map(function (f) { return fld(f, fv(f)); }).join('') + '<div id="works">' + workCard(cat, 1) + '</div>' +
