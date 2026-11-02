@@ -276,7 +276,7 @@
 })();
 (function () {
   'use strict';
-  var VERSION = '2.5.1';
+  var VERSION = '2.6.0';
   window.APP_VERSION = VERSION;
   var S = window.Store, I = window.I, M = window.MC;
   var $ = function (s, r) { return (r || document).querySelector(s); };
@@ -832,7 +832,7 @@
       case 'fuel': return k.label + (d.station ? ' — ' + d.station : '') + (d.liters ? ' · ' + d.liters + ' л' : '') + (d.fuelGrade ? ' · ' + d.fuelGrade : '');
       case 'charge': return k.label + (d.station ? ' — ' + d.station : '');
       case 'tire': return k.label + (d.tyType ? ' — ' + d.tyType : '');
-      case 'insurance': return k.label + ' — ' + (d.company || '');
+      case 'insurance': return k.label + (d.company ? ' — ' + d.company : '');
       case 'fine': return k.label + (d.paid ? ' (оплачено)' : ' (не оплачено)');
       case 'mileage': return 'Пробег — ' + fmtN(e.mileage) + ' км';
       case 'other': return d.name || 'Другое';
@@ -966,16 +966,34 @@
     });
     setH({ change: function (e) { var d = e.target.dataset && e.target.dataset.gpd; if (d && e.target.value) { var o = grange('custom'); o[d === 'gpf' ? 'from' : 'to'] = e.target.value; if (o.from > o.to) { var x = o.from; o.from = o.to; o.to = x; } setPref('gpf', o.from); setPref('gpt', o.to); about(id); } }, click: function (e) { var g = e.target.closest('[data-gp]'); if (g) { setPref('gp', g.dataset.gp); return about(id); } if (e.target.closest('[data-gps]')) return; if (e.target.closest('#acts')) return carActions(c); var b = e.target.closest('[data-ev]'); if (b) showEvent(S.db.events.find(function (x) { return x.id === b.dataset.ev; })); } });
   }
-  function history(id, cat) {
+  var MONF = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+  function histRow(e) {
+    var k = M.cat(e.category), c = S.costOf(e);
+    return '<div class="ev" data-ev="' + e.id + '"><span class="evi ' + k.cls + '">' + catI(k, 22) + '</span><div class="evm"><b>' + esc(evTitle(e)) + '</b><small>' + fmtD(e.date) + (e.mileage && e.category !== 'mileage' ? ' · ' + fmtN(e.mileage) + ' км' : '') + '</small></div><span class="evs">' + (c ? fmtN(Math.round(c)) + ' ₴' : '') + '</span></div>';
+  }
+  function history(id, cat, keep) {
     var c = S.car(id); if (!c) return go('#/garage');
-    var evs = S.events(id).filter(function (e) { return !cat || e.category === cat; });
+    if (!keep) ui.hper = 'all';
+    var per = ui.hper || 'all', from = per === 'year' ? dayStr(365) : per === 'month' ? dayStr(30) : '';
+    var evs = S.events(id).filter(function (e) { return (!cat || e.category === cat) && (!from || e.date >= from); }).sort(function (a, b) { return b.date.localeCompare(a.date); });
+    var sum = 0, n = 0; evs.forEach(function (e) { var v = S.costOf(e); sum += v; if (v > 0) n++; });
+    var kc = cat ? M.cat(cat) : null, groups = [], gi = {};
+    evs.forEach(function (e) { var key = e.date.slice(0, 7); if (!(key in gi)) { gi[key] = groups.length; groups.push({ key: key, list: [] }); } groups[gi[key]].list.push(e); });
+    var PN = [['all', 'Всё время'], ['year', 'Год'], ['month', 'Месяц']];
     page({
       title: 'История событий', back: '#/car/' + id,
-      body: '<div class="chips flt"><a class="chip all ' + (!cat ? 'on' : '') + '" href="#/car/' + id + '/history">Все</a>' +
-        M.CATS.map(function (k) { return '<a class="chip ' + k.cls + ' ' + (cat === k.id ? 'on' : '') + '" href="#/car/' + id + '/history/' + k.id + '">' + catI(k, 18) + '<span>' + k.label + '</span></a>'; }).join('') + '</div>' +
-        (evs.length ? evs.map(evRow).join('') : '<p class="empty">Событий пока нет</p>') + totalBar(evs, cat ? M.cat(cat).label : 'все события')
+      body: '<div class="hfr"><button class="hfb" id="hcat">' + (kc ? '<i style="background:' + (LCOL[cat] || '#8E8E93') + '">' + I(LIC[cat] || 'pin', 15) + '</i>' + esc(kc.label) : '<i style="background:#7C5CFF">' + I('layers', 15) + '</i>Все события') + I('down', 16) + '</button>' +
+        '<div class="hseg">' + PN.map(function (p) { return '<button data-hp="' + p[0] + '" class="' + (per === p[0] ? 'on' : '') + '">' + p[1] + '</button>'; }).join('') + '</div></div>' +
+        '<div class="hsum"><b>' + fmtN(Math.round(sum)) + ' ₴</b><small>' + evs.length + ' ' + (evs.length === 1 ? 'запись' : evs.length >= 2 && evs.length <= 4 ? 'записи' : 'записей') + (n > 1 ? ' · в среднем ' + fmtN(Math.round(sum / n)) + ' ₴' : '') + '</small></div>' +
+        (groups.length ? groups.map(function (g) { return '<div class="hmo">' + MONF[+g.key.slice(5, 7) - 1] + ' ' + g.key.slice(0, 4) + '</div><div class="hgrp">' + g.list.map(histRow).join('') + '</div>'; }).join('') : '<p class="empty">Событий пока нет</p>')
     });
-    setH({ click: function (e) { var b = e.target.closest('[data-ev]'); if (b) showEvent(S.db.events.find(function (x) { return x.id === b.dataset.ev; })); } });
+    setH({
+      click: function (e) {
+        var p = e.target.closest('[data-hp]'); if (p) { ui.hper = p.dataset.hp; return history(id, cat, true); }
+        if (e.target.closest('#hcat')) return sheet('Категория', [{ label: 'Все события', icon: 'layers', fn: function () { go('#/car/' + id + '/history'); } }].concat(M.CATS.map(function (k) { return { label: k.label, icon: LIC[k.id] || 'pin', fn: function () { go('#/car/' + id + '/history/' + k.id); } }; })));
+        var b = e.target.closest('[data-ev]'); if (b) showEvent(S.db.events.find(function (x) { return x.id === b.dataset.ev; }));
+      }
+    });
   }
 
   /* ---------- Форма авто ---------- */

@@ -806,3 +806,18 @@ html[data-theme=dark] .alert{background:rgba(44,44,46,.96)}
 .tabbar{left:50%;bottom:0;width:100%;max-width:480px;border-radius:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));border-top:.5px solid var(--line);box-shadow:none;background:rgba(var(--bgc),.97)}
 html[data-theme=dark] .tabbar{box-shadow:none;border-top-color:rgba(255,255,255,.12)}
 .page:has(.tabbar) .body{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+
+/* v2.6.0: История событий — фильтр кнопкой, месяцы, итог сверху */
+.hfr{display:flex;gap:10px;align-items:center;margin:4px 0 14px}
+.hfb{flex:none;display:flex;align-items:center;gap:8px;border:0;background:var(--w);color:var(--ink);border-radius:12px;padding:8px 10px;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.hfb i{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff}.hfb svg{color:var(--mut)}
+.hfb i svg{color:#fff;width:15px;height:15px}
+.hseg{flex:1;display:flex;background:var(--sur);border-radius:10px;padding:2px;min-width:0}
+.hseg button{flex:1;border:0;background:none;color:var(--ink);border-radius:8px;padding:7px 2px;font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer}
+.hseg button.on{background:var(--w);box-shadow:0 2px 6px rgba(0,0,0,.12);font-weight:600}
+html[data-theme=dark] .hseg button.on{background:#636366}
+.hsum{padding:2px 6px 6px}.hsum b{display:block;font-size:40px;font-weight:700;letter-spacing:-.03em}.hsum small{color:var(--mut);font-size:15px}
+.hmo{font-size:13px;text-transform:uppercase;color:var(--mut);margin:14px 16px 7px;letter-spacing:.2px}
+.hgrp{background:var(--w);border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.hgrp .ev{margin:0;border-radius:0;box-shadow:none;background:none}
+.hgrp .evm b{white-space:normal;font-size:17px}
