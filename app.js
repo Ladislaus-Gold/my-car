@@ -971,9 +971,12 @@
     var evs = S.events(id).filter(function (e) { return !cat || e.category === cat; });
     page({
       title: 'История событий', back: '#/car/' + id,
-      body: '<div class="chips flt"><a class="chip all ' + (!cat ? 'on' : '') + '" href="#/car/' + id + '/history">Все</a>' +
+      body: '<div class="chips flt row"><a class="chip all ' + (!cat ? 'on' : '') + '" href="#/car/' + id + '/history">Все</a>' +
         M.CATS.map(function (k) { return '<a class="chip ' + k.cls + ' ' + (cat === k.id ? 'on' : '') + '" href="#/car/' + id + '/history/' + k.id + '">' + catI(k, 18) + '<span>' + k.label + '</span></a>'; }).join('') + '</div>' +
-        (evs.length ? evs.map(evRow).join('') : '<p class="empty">Событий пока нет</p>') + totalBar(evs, cat ? M.cat(cat).label : 'все события')
+        (evs.length ? evs.map(evRow).join('') + totalBar(evs, cat ? M.cat(cat).label : 'все события')
+          : cat ? '<div class="emp"><i class="evi empi ' + M.cat(cat).cls + '">' + catI(M.cat(cat), 30) + '</i><b>В категории «' + esc(M.cat(cat).label) + '» пока пусто</b><p>Здесь появятся записи этой категории вашего авто.</p>' +
+            (M.SCHEMAS[cat] ? '<a class="empb" href="#/car/' + id + '/record/' + cat + '">+ Добавить запись</a>' : '') + '</div><a class="emplk" href="#/car/' + id + '/history">Показать все события</a>'
+          : '<p class="empty">Событий пока нет</p>')
     });
     setH({ click: function (e) { var b = e.target.closest('[data-ev]'); if (b) showEvent(S.db.events.find(function (x) { return x.id === b.dataset.ev; })); } });
   }
