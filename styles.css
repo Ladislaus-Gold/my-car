@@ -806,3 +806,23 @@ html[data-theme=dark] .alert{background:rgba(44,44,46,.96)}
 .tabbar{left:50%;bottom:0;width:100%;max-width:480px;border-radius:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));border-top:.5px solid var(--line);box-shadow:none;background:rgba(var(--bgc),.97)}
 html[data-theme=dark] .tabbar{box-shadow:none;border-top-color:rgba(255,255,255,.12)}
 .page:has(.tabbar) .body{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+
+/* ===== iOS, этап 1: основа (крупные заголовки, группы 14px, плоская нижняя панель) ===== */
+.top:not(.left){grid-template-columns:1fr auto;grid-template-rows:auto auto;row-gap:0;align-items:center;padding-bottom:6px}
+.top:not(.left)>.ib,.top:not(.left)>span:first-child:not(.topr){grid-row:1;grid-column:1;justify-self:start;width:44px;height:36px;margin-left:-10px}
+.top:not(.left)>.topr{grid-row:1;grid-column:2;min-width:0;align-items:center}
+.top:not(.left)>h1{grid-row:2;grid-column:1/-1;text-align:left;font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1.12;padding:0 2px;white-space:normal;overflow:visible}
+.page .top.left h1,.page:has(.searchrow) .top.left h1,.page:has(.sel) .top.left h1{font-size:34px}
+.top .link{font-size:17px}
+.card,.cgrp,.rg-g,.rg-car,.rg-box{border-radius:14px}
+.rg-pills div{border-radius:14px}
+:not(.ev)+.ev,:not(.rem)+.rem,:not(.al)+.al,:not(.svc)+.svc{border-radius:14px 14px 0 0}
+.ev:last-child,.ev:has(+ :not(.ev)),.rem:last-child,.rem:has(+ :not(.rem)),.al:last-child,.al:has(+ :not(.al)),.svc:last-child,.svc:has(+ :not(.svc)){border-radius:0 0 14px 14px}
+:not(.ev)+.ev:is(:last-child,:has(+ :not(.ev))),:not(.rem)+.rem:is(:last-child,:has(+ :not(.rem))),:not(.al)+.al:is(:last-child,:has(+ :not(.al))),:not(.svc)+.svc:is(:last-child,:has(+ :not(.svc))){border-radius:14px}
+.rg-card{border-radius:14px!important}
+.crow i{width:30px;height:30px;border-radius:7px}.crow+.crow:before{left:56px}
+.h2,.sub{font-size:22px}
+.sheet{border-radius:12px 12px 0 0}
+.tabadd{width:50px;height:32px;margin:0 6px;border-radius:16px;box-shadow:none;background:var(--p)}
+.tabadd svg{width:20px;height:20px;stroke-width:2.4}
+.tab.on{background:none}
