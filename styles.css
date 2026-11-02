@@ -806,3 +806,15 @@ html[data-theme=dark] .alert{background:rgba(44,44,46,.96)}
 .tabbar{left:50%;bottom:0;width:100%;max-width:480px;border-radius:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom));border-top:.5px solid var(--line);box-shadow:none;background:rgba(var(--bgc),.97)}
 html[data-theme=dark] .tabbar{box-shadow:none;border-top-color:rgba(255,255,255,.12)}
 .page:has(.tabbar) .body{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+
+/* история событий: фильтры в одну строку и пустая категория */
+.chips.flt.row{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:8px;margin:0 -16px;padding:2px 16px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chips.flt.row::-webkit-scrollbar{display:none}
+.chips.flt.row .chip{flex:none;height:40px;font-size:16px;padding:0 14px;gap:8px;white-space:nowrap;border:0}
+.chips.flt.row .chip.on{outline:2.5px solid var(--p)}
+.emp{margin:26px 0 0;background:var(--card);border-radius:22px;padding:28px 20px;text-align:center}
+.emp .empi{width:64px;height:64px;border-radius:20px;margin:0 auto 14px;font-style:normal}
+.emp b{display:block;font-size:20px;font-weight:600;margin-bottom:6px}
+.emp p{margin:0 0 18px;color:var(--mut);font-size:16px;line-height:1.35}
+.emp .empb{display:flex;align-items:center;justify-content:center;height:50px;border-radius:25px;background:var(--p);color:#fff;font-size:17px;font-weight:600}
+.emplk{display:block;text-align:center;margin-top:14px;color:var(--p);font-size:16px;font-weight:500}
